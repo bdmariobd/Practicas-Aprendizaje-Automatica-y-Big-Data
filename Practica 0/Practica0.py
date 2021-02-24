@@ -27,6 +27,7 @@ def calculo_rapido(a, b, M, num_puntos, fun):
     integral = count / num_puntos * (b - a)  * M  
     
 def integra_mc(fun, a, b, num_puntos=10000):
+    print("prueba")
     
     
 ####juan
