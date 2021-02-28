@@ -3,6 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+save_img_route= 'Practica 0/time.png'
+num_puntos = 100000
+a=1
+b=np.pi
+
 def cuadrado(x):
     return x*x
     
@@ -35,23 +40,26 @@ def compara_tiempos():
     """Compara tiempos entre integra_mc_vect y integra_mc_it"""
     times_it = []
     times_vect=[]
-    num_puntos=10000
     sizes=np.linspace(1,num_puntos,50)
     for size in sizes:
         tic= time.process_time()
-        integra_mc_it(cuadrado,1,np.pi)
+        integra_mc_it(cuadrado,a,b,int(size))
         toc= time.process_time()
-        times_it+=[1000 * (toc-tic)]
+        elapsed_time = 1000 * (toc-tic)
+        times_it+=[elapsed_time]
 
         tic_1= time.process_time()
-        integra_mc_vect(cuadrado,1,np.pi)
+        integra_mc_vect(cuadrado,a,b,int(size))
         toc_1= time.process_time()
-        times_vect+=[1000 * (toc_1-tic_1)]
+        elapsed_time = 1000 * (toc_1-tic_1)
+        times_vect+=[elapsed_time]
+
     plt.figure()
     plt.scatter(sizes,times_it,c='red',label='it')
     plt.scatter(sizes,times_vect,c='blue',label='vect')
     plt.legend()
-    plt.savefig('Practica 0/time.png')
+    plt.savefig(save_img_route)
+    plt.close()
 
 
 compara_tiempos()
