@@ -1,67 +1,57 @@
+
 import numpy as np
+import matplotlib.pyplot as plt
+import time
 
 def cuadrado(x):
     return x*x
-
-def nada(x):
-    return x
-
-
-def calculo_lento(a, b, M, num_puntos, fun):
+    
+def integra_mc_it(fun, a, b, num_puntos=10000):
+    """Calcula la integral de fun entre a y b por Monte Carlo con bucles"""
     count = 0
+    eje_x = np.linspace(a,b,num_puntos)
+    eje_y= fun(eje_x)
+    maximo_fun= max(eje_y)
     for i in range(num_puntos):
         x = np.random.uniform(a, b)
-        y = np.random.uniform(0, M)
+        y = np.random.uniform(0, maximo_fun)
         if y < fun(x):
-            count += 1
-            
-    integral = count / num_puntos * (b - a)  * M  
-    
-def calculo_rapido(a, b, M, num_puntos, fun):
- 
+            count += 1            
+    integral = count / num_puntos * (b - a)  * maximo_fun
+    return integral 
+
+def integra_mc_vect(fun, a, b, num_puntos=10000):
+    """Calcula la integral de fun entre a y b por Monte Carlo sin bucles"""
+    eje_x = np.linspace(a,b,num_puntos)
+    eje_y= fun(eje_x)
+    maximo_fun= max(eje_y)
     x = np.random.uniform(a, b,num_puntos)
-    y = np.random.uniform(0, M,num_puntos)
+    y = np.random.uniform(0, maximo_fun,num_puntos) 
+    count = sum(y<fun(x))
+    integral = count / num_puntos * (b - a)  * maximo_fun
+    return integral 
     
-    
-            
-    integral = count / num_puntos * (b - a)  * M  
-    
-def integra_mc(fun, a, b, num_puntos=10000):
-    print("prueba")
-    
-    
-####juan
+def compara_tiempos():
+    """Compara tiempos entre integra_mc_vect y integra_mc_it"""
+    times_it = []
+    times_vect=[]
+    num_puntos=10000
+    sizes=np.linspace(1,num_puntos,50)
+    for size in sizes:
+        tic= time.process_time()
+        integra_mc_it(cuadrado,1,np.pi)
+        toc= time.process_time()
+        times_it+=[1000 * (toc-tic)]
 
-import numpy as np
+        tic_1= time.process_time()
+        integra_mc_vect(cuadrado,1,np.pi)
+        toc_1= time.process_time()
+        times_vect+=[1000 * (toc_1-tic_1)]
+    plt.figure()
+    plt.scatter(sizes,times_it,c='red',label='it')
+    plt.scatter(sizes,times_vect,c='blue',label='vect')
+    plt.legend()
+    plt.savefig('Practica 0/time.png')
 
-def integra_mc_it(fun, a, b, puntos, max, num_puntos=1000):
-    debajo = 0
-    for x, y in puntos:
-        if(y < cuadrado(x)):
-            debajo += 1
-    return debajo / num_puntos * (b - a) * max
 
-def integra_mc_vect(fun,  a, b, max, num_puntos=1000):
-    pass
-
-def cuadrado(x):
-    return x * x
-
-def main():
-    a = 0
-    b = 50
-    num_puntos = 10000
-    valores = np.arange(a, b, 1)
-    valores = cuadrado(valores)
-    max = valores.max()
-
-    puntos = np.column_stack((np.random.uniform(a, b, num_puntos), np.random.uniform(0, max, num_puntos)))
-
-    print(puntos)
-
-    print(valores)
-
-    print(integra_mc_it(cuadrado, a, b, puntos, max, num_puntos))
-
-if name == 'main':
-    main()
+compara_tiempos()
