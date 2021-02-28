@@ -1,9 +1,10 @@
+#!/usr/bin/python3
 
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-save_img_route= 'Practica 0/time.png'
+save_img_route= './time.png'
 num_puntos = 100000
 a=1
 b=np.pi
