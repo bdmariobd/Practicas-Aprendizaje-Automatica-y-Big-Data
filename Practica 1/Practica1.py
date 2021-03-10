@@ -24,20 +24,24 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pandas.io.papyrsers import read_csv
+from pandas.io.parsers import read_csv
 
 alpha = 0.01
 it=1500
-def charge_data(file_name):
+def load_data(file_name):
     return read_csv(file_name, header=None).to_numpy()
 
 def hypothesis(theta_0, theta_1 , x):
     return theta_0 + theta_1 * x
 
 def linear_regression():
-    data = charge_data("exdata1.csv")
+    data = load_data("./ex1data1.csv")
     X = data[:, 0]
     Y = data[:, 1]
+
+    plt.plot(X, Y, "x")
+    plt.show()
+
     m = len(X)
     theta_0 = theta_1 = 0
     for i in range(it):
@@ -48,7 +52,9 @@ def linear_regression():
         theta_0 = theta_0 - (alpha/m) * sum_0
         theta_1 = theta_1 - (alpha/m) * sum_1
 
-    plt.figure()
+    
+
+    # plt.figure()
     """plt.scatter(sizes, times_it, c='red', label='it')
     plt.scatter(sizes, times_vect, c='blue', label='vect')
     plt.legend()
@@ -56,3 +62,5 @@ def linear_regression():
     plt.ylabel('tiempo')
     plt.savefig('./time.png')
     """
+
+linear_regression()
