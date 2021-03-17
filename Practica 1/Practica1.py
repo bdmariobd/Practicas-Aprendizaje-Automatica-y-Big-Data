@@ -50,7 +50,7 @@ def linear_regression():
         theta_0 = theta_0 - (alpha/m) * sum_0
         theta_1 = theta_1 - (alpha/m) * sum_1
 
-    x=np.linspace(min(X),max(Y),100)
+    x=np.linspace(min(X),max(X),100)
     y= theta_0 + theta_1 * x
     plt.plot(x,y)
     plt.show()
