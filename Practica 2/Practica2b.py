@@ -25,11 +25,13 @@
 # Obtiene un vector con los índices de los ejemplos positivos
 import numpy as np
 import matplotlib.pyplot as plt
+import sklearn.preprocessing
 from pandas.io.parsers import read_csv
 import scipy.optimize as opt
 
+
 def load_data(file_name):
-    return read_csv(file_name, header=None).values
+    return read_csv(file_name, header=None).values.astype(float)
 
 
 def print_data(X, Y):
@@ -46,33 +48,32 @@ def sigmoide(z):
     return 1 / (1 + np.exp(-z))
 
 
-def coste(theta, X, Y):
+def coste(theta, X, Y, l):
     m = len(X)
     H = sigmoide(np.matmul(X, theta))
     cost = (- 1 / m) * (np.dot(Y, np.log(H)) + np.dot((1 - Y), np.log(1 - H)))
     return cost
 
 
-def gradiente(theta, X, Y):
+def gradiente(theta, X, Y, l):
+    m = len(X)
     H = sigmoide(np.matmul(X, theta))
-    grad = (1 / len(Y)) * np.matmul(X.T, H - Y)
-    return grad
+    grad = (1 / m) * np.matmul(X.T, H - Y)
+    return grad + (l/m) * theta
 
-def pinta_frontera_recta(X, Y, theta):
+
+def plot_decisionboundary(X, Y, theta, poly):
+    plt.figure()
     x1_min, x1_max = X[:, 0].min(), X[:, 0].max()
     x2_min, x2_max = X[:, 1].min(), X[:, 1].max()
-
     xx1, xx2 = np.meshgrid(np.linspace(x1_min, x1_max),
     np.linspace(x2_min, x2_max))
-
-    h = sigmoide(np.c_[np.ones((xx1.ravel().shape[0], 1)),
-    xx1.ravel(),
-    xx2.ravel()].dot(theta))
+    h = sigmoide(poly.fit_transform(np.c_[xx1.ravel(),
+    xx2.ravel()]).dot(theta))
     h = h.reshape(xx1.shape)
-
-    # el cuarto parámetro es el valor de z cuya frontera se
-    # quiere pintar
-    plt.contour(xx1, xx2, h, [0.5], linewidths=2, colors='green')
+    plt.contour(xx1, xx2, h, [0.5], linewidths=1, colors='g')
+    plt.savefig("boundary.pdf")
+    plt.close()
 
 def porcentaje_aciertos(X, Y, theta): #
     aciertos = 0
@@ -86,21 +87,21 @@ def porcentaje_aciertos(X, Y, theta): #
     return aciertos / len(Y) * 100
 
 if __name__ == '__main__':
-    datos = load_data('./ex2data1.csv')
+    datos = load_data('./ex2data2.csv')
     X = datos[:, :-1]
-
     Y = datos[:, -1]
 
     print_data(X, Y)
-    theta = np.zeros(3)
-    m = np.shape(X)[0]
-    n = np.shape(X)[1]
 
-    X = np.hstack([np.ones([m, 1]), X])
-    nX = datos[:, :-1]
-    result = opt.fmin_tnc(func=coste, x0=theta, fprime=gradiente, args=(X, Y))
+    mapFeature = sklearn.preprocessing.PolynomialFeatures(6)
+    mapFeatureX = mapFeature.fit_transform(X)
+    theta = np.zeros(mapFeatureX.shape[1])
+    l=0
+    result = opt.fmin_tnc(func=coste, x0=theta, fprime=gradiente, args=(mapFeatureX, Y,l))
     theta_opt = result[0]
-    pinta_frontera_recta(nX, Y, theta_opt)
+    data = np.delete(mapFeatureX,0,axis=1)
+
+    plot_decisionboundary(data, Y, theta_opt,mapFeature)
     plt.show()
-    print("Prediccion con un porcentaje de aciertos de:", porcentaje_aciertos(X, Y, theta_opt))
+    #print("Prediccion con un porcentaje de aciertos de:", porcentaje_aciertos(X, Y, theta_opt))
 
