@@ -1,4 +1,5 @@
 .vscode/settings.json
 .idea
+*.swp
 /venv/
 /venv/
