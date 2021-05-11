@@ -25,15 +25,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pandas.io.parsers import read_csv
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
 
 def getMat(file_name):
-    return read_csv(file_name, header=None).to_numpy()
+    return read_csv(file_name, header=None).to_numpy().astype(float)
 
 
 # Prediction of the value y. In this case using linear regression.
 def hypothesis(X, theta_0, theta_1):
     return X * theta_1 + theta_0
-
+    
 
 # Cost function J(theta), measures how good are our guesses
 def cost(X, Y, theta_0, theta_1):
@@ -56,29 +60,38 @@ def gradientDescent(X, Y, iterations, alpha):
     plt.xlabel('Iterations')
     plt.ylabel('J(theta)')
     plt.plot(np.arange(0, iterations), costs)
-    plt.show()
     plt.savefig('costs.png')
+    plt.show()
     return theta_0, theta_1
 
 
-def plot_surfaces(theta_0_range, theta_1_range, X, Y):
+def plot_surfaces(theta_0_, theta_1_, theta_0_range, theta_1_range, X, Y):
     step = .1
     theta_0 = np.arange(theta_0_range[0], theta_0_range[1], step)
     theta_1 = np.arange(theta_1_range[0], theta_1_range[1], step)
     theta_0, theta_1 = np.meshgrid(theta_0, theta_1)
-    cost = np.empty_like(theta_0)
+    Cost = np.empty_like(theta_0)
     for i_x, i_y in np.ndindex(theta_0.shape):
-        cost[i_x, i_y] = cost(X, Y, [theta_0[i_x, i_y], theta_1[i_x, i_y]])
-    np.plot_surface(theta_0, theta_1, cost)
-    np.show()
+        Cost[i_x, i_y] = cost(X, Y, theta_0[i_x, i_y], theta_1[i_x, i_y])
+    
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    ax.plot_surface(theta_0, theta_1, Cost, cmap=cm.coolwarm)
+    plt.show()
+    
+    plt.contour(theta_0, theta_1, Cost, np.logspace(-2, 3, 20), colors='red')
+    plt.scatter(theta_0_, theta_1_)
+    plt.show()
 
 
 def main():
     data = getMat('./ex1data1.csv')
     X = data[:, 0]
     Y = data[:, 1]
+    alpha = 0.01
+    iterations = 1500
 
-    theta_0, theta_1 = gradientDescent(X, Y, 1500, 0.01)
+    theta_0, theta_1 = gradientDescent(X, Y, iterations, alpha)
     x = np.linspace(min(X), max(X), 100)
     y = theta_0 + theta_1 * x
     
@@ -88,9 +101,10 @@ def main():
     plt.plot(X, Y, 'x')
     plt.plot(x, y, label=('y = ' + str(theta_1) + 'x + ' + str(theta_0)))
     plt.legend()
-    plt.show()
     plt.savefig('result.png')
+    plt.show()
+
+    plot_surfaces(theta_0, theta_1, [-10, 10], [-1, 4], X, Y)
     
-    plot_surfaces([-1, 10], [-1, 4], X, Y)
 
 main()
