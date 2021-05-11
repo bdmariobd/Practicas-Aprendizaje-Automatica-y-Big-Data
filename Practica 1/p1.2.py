@@ -68,7 +68,7 @@ def main():
     # print(X, ranges, averages)
 
     costs = []
-    alpha = 0.1
+    alpha = 0.01
     iterations = 1000
     T = np.zeros(np.shape(X)[1])
     for i in range(iterations):
