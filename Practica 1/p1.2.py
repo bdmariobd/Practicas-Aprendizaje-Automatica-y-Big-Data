@@ -42,8 +42,13 @@ def gradient(X, Y, T, alpha):
     return new_T
 
 
+def cost(X, Y, T):
+    XTY = np.matmul(X, T) - Y
+    return 1 / (2 * np.shape(X)[0]) * (np.matmul(np.transpose(XTY), XTY))
+
 
 def main():
+
     data = getMat('./ex1data2.csv')
     X = data[:, :-1]
     X = np.hstack([np.ones([len(X), 1]), X])
@@ -60,22 +65,24 @@ def main():
         ranges.append(ran)
         averages.append(avg)
 
-    print(X, ranges, averages)
+    # print(X, ranges, averages)
 
-
-    alpha = 0.000000001
+    costs = []
+    alpha = 0.1
+    iterations = 1000
     T = np.zeros(np.shape(X)[1])
-    for i in range(1000):
+    for i in range(iterations):
         T = gradient(X, Y, T, alpha)
-    
-    #for i in X:
-    #    print(i)
-    #    i *= ranges
-    #    i += averages
-    #    print(i)
+        costs.append(cost(X, Y, T))
 
-    print(X)
+    plt.suptitle('Cost')
+    plt.xlabel('Iterations')
+    plt.ylabel('J(theta)')
+    plt.plot(np.arange(0, iterations), costs)
+    plt.savefig('costs.png')
+    plt.show()
 
+    print(T)
     for i in range(len(X)):
         print(np.dot(np.transpose(T), X[i]))
 
