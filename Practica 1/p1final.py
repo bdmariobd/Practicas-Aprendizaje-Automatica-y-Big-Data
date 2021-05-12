@@ -49,12 +49,12 @@ def gradientDescent(X, Y, iterations, alpha):
     costs = []
 
     for i in range(iterations):
-        costs.append(cost(X, Y, theta_0, theta_1))
         H = hypothesis(X, theta_0, theta_1)
         temp_0 = theta_0 - (alpha / len(X)) * (H - Y).sum()
         temp_1 = theta_1 - (alpha / len(X)) * ((H - Y) * X).sum()
         theta_0 = temp_0
         theta_1 = temp_1
+        costs.append(cost(X, Y, theta_0, theta_1))
 
     plt.suptitle('Cost')
     plt.xlabel('Iterations')
@@ -88,7 +88,7 @@ def main():
     data = getMat('./ex1data1.csv')
     X = data[:, 0]
     Y = data[:, 1]
-    alpha = 0.01
+    alpha = 0.0001
     iterations = 1500
 
     theta_0, theta_1 = gradientDescent(X, Y, iterations, alpha)

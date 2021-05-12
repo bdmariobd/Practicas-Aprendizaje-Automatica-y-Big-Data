@@ -41,11 +41,29 @@ def gradient(X, Y, T, alpha):
         new_T[i] -= (alpha / m) * aux_i.sum()
     return new_T
 
+def calculate_normal(X,Y):
+    transpose = np.transpose(X)
+    return np.linalg.inv(transpose.dot(X)).dot((transpose.dot(Y)))
 
 def cost(X, Y, T):
     XTY = np.matmul(X, T) - Y
     return 1 / (2 * np.shape(X)[0]) * (np.matmul(np.transpose(XTY), XTY))
 
+def normalize(X):
+    ranges = [ 0 ]
+    averages = [ 1 ]
+    XNorm = np.copy(X)
+    for i in range(1, np.shape(X)[1]):
+        col = XNorm[:, i]
+        ran = np.max(col) - np.min(col)
+        avg = np.average(col)
+        col -= avg
+        col /= ran
+        ranges.append(ran)
+        averages.append(avg)
+    averages = np.array(averages)
+    ranges = np.array(ranges)
+    return XNorm, averages, ranges
 
 def main():
 
@@ -53,27 +71,15 @@ def main():
     X = data[:, :-1]
     X = np.hstack([np.ones([len(X), 1]), X])
     Y = data[:, -1]
-
-    ranges = [ 0 ]
-    averages = [ 1 ]
-    for i in range(1, np.shape(X)[1]):
-        col = X[:, i]
-        ran = np.max(col) - np.min(col)
-        avg =  np.average(col)
-        col -= avg
-        col /= ran
-        ranges.append(ran)
-        averages.append(avg)
-
-    # print(X, ranges, averages)
-
+    XNorm,averages,ranges = normalize(X)
     costs = []
     alpha = 0.01
-    iterations = 1000
+    iterations = 1500
     T = np.zeros(np.shape(X)[1])
+
     for i in range(iterations):
-        T = gradient(X, Y, T, alpha)
-        costs.append(cost(X, Y, T))
+        T = gradient(XNorm, Y, T, alpha)
+        costs.append(cost(XNorm, Y, T))
 
     plt.suptitle('Cost')
     plt.xlabel('Iterations')
@@ -82,8 +88,17 @@ def main():
     plt.savefig('costs.png')
     plt.show()
 
-    print(T)
+    result = calculate_normal(X,Y)
+    print('Predicciones del CSV usando grandiente y la ecuacion normal: ')
     for i in range(len(X)):
-        print(np.dot(np.transpose(T), X[i]))
+        print('Gradiente:', np.dot(np.transpose(T), XNorm[i]))
+        print('Ec. normal: ', np.dot(np.transpose(result), X[i]))
+        print('Valor del ejemplo:', Y[i])
+        print('------------------')
+
+    print("Casa con una superficie de 1.650 pies cuadrados y 3 habitaciones:")
+    print("Ec.normal: ", result[0] + result[1] * 1650 + result[2] * 3)
+    print("Gradiente: ",T[0] + T[1] * ((1650-averages[1])/ranges[1]) + T[2] * ((3-averages[2])/ranges[2]))
+
 
 main()
