@@ -39,7 +39,6 @@ def print_data(X, Y):
     plt.scatter(X[pos, 0], X[pos, 1], marker='+', c='k')
     pos = np.where(Y == 0)
     plt.scatter(X[pos, 0], X[pos, 1], marker='o', c='b')
-    #plt.show()
     plt.savefig("data.pdf")
     plt.legend(
         handles=[
@@ -75,13 +74,9 @@ def pinta_frontera_recta(X, Y, theta):
     xx1, xx2 = np.meshgrid(np.linspace(x1_min, x1_max),
     np.linspace(x2_min, x2_max))
 
-    h = sigmoide(np.c_[np.ones((xx1.ravel().shape[0], 1)),
-    xx1.ravel(),
-    xx2.ravel()].dot(theta))
+    h = sigmoide(np.c_[np.ones((xx1.ravel().shape[0], 1)), xx1.ravel(), xx2.ravel()].dot(theta))
     h = h.reshape(xx1.shape)
 
-    # el cuarto parámetro es el valor de z cuya frontera se
-    # quiere pintar
     plt.contour(xx1, xx2, h, [0.5], linewidths=2, colors='green')
 
 
@@ -89,11 +84,12 @@ def porcentaje_aciertos(X, Y, theta):
     aciertos = 0
     j = 0
     for i in X:
-        prod = sigmoide(np.dot(i, theta))
-        if prod >= 0.5 and Y[j] == 1:
+        pred = sigmoide(np.dot(i, theta))
+        if pred >= 0.5 and Y[j] == 1:
             aciertos += 1
-        elif prod < 0.5 and Y[j] == 0:
+        elif pred < 0.5 and Y[j] == 0:
             aciertos += 1
+        j += 1
     return aciertos / len(Y) * 100
 
 
