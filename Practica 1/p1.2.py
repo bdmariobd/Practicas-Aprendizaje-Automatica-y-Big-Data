@@ -73,7 +73,7 @@ def main():
     Y = data[:, -1]
     XNorm,averages,ranges = normalize(X)
     costs = []
-    alpha = 0.1
+    alpha = 0.01
     iterations = 1500
     T = np.zeros(np.shape(X)[1])
 
