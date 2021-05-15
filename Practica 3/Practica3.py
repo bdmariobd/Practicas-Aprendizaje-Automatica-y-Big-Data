@@ -68,23 +68,17 @@ def oneVsAll(X, Y, num_etiquetas, l):
 def calcularAciertos(X, Y, T, tags):
     aciertos = 0
     j = 0
-    print(X.shape)
-    print(T.shape)
+    print(X, Y, T, tags)
     for i in range(len(X)):
         for tag in range(tags):
-            print(X[i].shape, T[tag].shape)
-            print(X[i], T[tag])
             pred = sigmoid(X[i].dot(T[tag]))
             if pred < .5:
                 pred = 0
             else:
                 pred = 1
-                input()
 
             pred = int(pred)
-            print(pred, Y[j], tag)
             if pred == 1 and ((Y[j] == 10 and tag == 0) or tag == Y[j]):
-                print('hola')
                 aciertos += 1
                 break
         j += 1
@@ -107,9 +101,12 @@ def main():
     # reg = regularization
     l = .1
     tags = 10
-    result, X = oneVsAll(X, Y, tags, l)
-    np.save('./result.npy', result)
+    #result, X = oneVsAll(X, Y, tags, l)
+    #np.save('./result.npy', result)
     result = np.load('./result.npy')
+    X = sklearn.preprocessing.PolynomialFeatures(2).fit_transform(X)
+
+
     print(calcularAciertos(X, Y, result, len(result)))
 
 
