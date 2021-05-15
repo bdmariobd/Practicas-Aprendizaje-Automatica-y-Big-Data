@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
@@ -53,34 +54,32 @@ def gradiente(theta, X, Y, l):
 
 def oneVsAll(X, Y, num_etiquetas, l):
     result = []
-    mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
-    mapFeatureX = mapFeature.fit_transform(X)
-    # mapFeatureX = X
+    # mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
+    # mapFeatureX = mapFeature.fit_transform(X)
+    mapFeatureX = X
     T = np.zeros(mapFeatureX.shape[1])
 
-    for i in range(num_etiquetas):
+    for i in range(0, num_etiquetas + 1):
         YY = (Y == i) * 1
         result.append(opt.fmin_tnc(func = costRegression, x0 = T, fprime = gradiente,
             args = (mapFeatureX, YY, l))[0])
     return result, mapFeatureX
 
 
-def calcularAciertos(X, Y, T, tags):
+def calcularAciertos(X, Y, T):
     aciertos = 0
     j = 0
-    print(X, Y, T, tags)
+    tags = len(T)
     for i in range(len(X)):
-        for tag in range(tags):
+        maxi = sys.float_info.min
+        for tag in range(0, tags):
             pred = sigmoid(X[i].dot(T[tag]))
-            if pred < .5:
-                pred = 0
-            else:
-                pred = 1
+            if(pred > maxi):
+                p = tag
+                maxi = pred
 
-            pred = int(pred)
-            if pred == 1 and ((Y[j] == 10 and tag == 0) or tag == Y[j]):
-                aciertos += 1
-                break
+        if Y[i] == p:
+            aciertos += 1
         j += 1
     return aciertos / len(Y) * 100
 
@@ -101,13 +100,13 @@ def main():
     # reg = regularization
     l = .1
     tags = 10
-    #result, X = oneVsAll(X, Y, tags, l)
-    #np.save('./result.npy', result)
-    result = np.load('./result.npy')
-    X = sklearn.preprocessing.PolynomialFeatures(2).fit_transform(X)
+    result, X = oneVsAll(X, Y, tags, l)
+    # np.save('./result.npy', result)
+    # result = np.load('./result.npy')
+    # X = sklearn.preprocessing.PolynomialFeatures(2).fit_transform(X)
 
 
-    print(calcularAciertos(X, Y, result, len(result)))
+    print(calcularAciertos(X, Y, result))
 
 
 main()
