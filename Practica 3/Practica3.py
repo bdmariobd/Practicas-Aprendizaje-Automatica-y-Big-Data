@@ -58,31 +58,43 @@ def oneVsAll(X, Y, num_etiquetas, l):
     T = np.zeros(mapFeatureX.shape[1])
 
     for i in range(num_etiquetas):
+        YY = (Y == i + 1) * 1
+        print(i, YY)
         result.append(opt.fmin_tnc(func = costRegression, x0 = T, fprime = gradiente,
-            args = (mapFeatureX, Y, l)))
-        break
+            args = (mapFeatureX, YY, l))[0])
 
-    print(result)
     return result
+
+
+def calcularAciertos(X, Y, T):
+    aciertos = 0
+    j = 0
+    for i in range(len(X)):
+        pred = sigmoid(np.dot(X[i], T))
+        if pred >= 0.5 and Y[j] == 1:
+            aciertos += 1
+        elif pred < 0.5 and Y[j] == 0:
+            aciertos += 1
+        j += 1
+    return aciertos / len(Y) * 100
+
 
 def main():
     data = loadmat('./ex3data1.mat')
     X = data['X']
     Y = data['y']
+    Y = np.ravel(Y)
+
     sample = np.random.choice(X.shape[0], 10)
     plt.imshow(X[sample, :].reshape(-1, 20).T)
     plt.axis('off')
     plt.show()
 
-    m = np.shape(X)[0]
-    X1s = np.hstack([np.ones([m, 1]), X])
-    T = np.zeros(X1s.shape[1])
-    H = sigmoid(np.matmul(X1s, T))
-
     # reg = regularization
     l = .1
     tags = 10
-    result = oneVsAll(X1s, Y, tags, l)
+    result = oneVsAll(X, Y, tags, l)
+    print(calcularAciertos(X, Y, T))
 
 
 main()
