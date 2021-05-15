@@ -53,32 +53,38 @@ def gradiente(theta, X, Y, l):
 
 def oneVsAll(X, Y, num_etiquetas, l):
     result = []
-    # mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
-    # mapFeatureX = mapFeature.fit_transform(X)
-    mapFeatureX = X
-
+    mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
+    mapFeatureX = mapFeature.fit_transform(X)
+    # mapFeatureX = X
     T = np.zeros(mapFeatureX.shape[1])
 
     for i in range(num_etiquetas):
-        YY = (Y == i + 1) * 1
+        YY = (Y == i) * 1
         result.append(opt.fmin_tnc(func = costRegression, x0 = T, fprime = gradiente,
             args = (mapFeatureX, YY, l))[0])
-        break
-    return result
+    return result, mapFeatureX
 
 
 def calcularAciertos(X, Y, T, tags):
     aciertos = 0
     j = 0
+    print(X.shape)
+    print(T.shape)
     for i in range(len(X)):
         for tag in range(tags):
-            pred = sigmoid(np.dot(X[i], T[tag]))
+            print(X[i].shape, T[tag].shape)
+            print(X[i], T[tag])
+            pred = sigmoid(X[i].dot(T[tag]))
             if pred < .5:
                 pred = 0
             else:
                 pred = 1
+                input()
 
-            if pred == 1 and tag == Y[j]:
+            pred = int(pred)
+            print(pred, Y[j], tag)
+            if pred == 1 and ((Y[j] == 10 and tag == 0) or tag == Y[j]):
+                print('hola')
                 aciertos += 1
                 break
         j += 1
@@ -96,10 +102,12 @@ def main():
     plt.axis('off')
     plt.show()
 
+    X = np.hstack([np.ones([np.shape(X)[0], 1]), X])
+
     # reg = regularization
     l = .1
     tags = 10
-    result = oneVsAll(X, Y, tags, l)
+    result, X = oneVsAll(X, Y, tags, l)
     np.save('./result.npy', result)
     result = np.load('./result.npy')
     print(calcularAciertos(X, Y, result, len(result)))
