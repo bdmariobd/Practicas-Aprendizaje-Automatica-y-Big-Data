@@ -53,28 +53,34 @@ def gradiente(theta, X, Y, l):
 
 def oneVsAll(X, Y, num_etiquetas, l):
     result = []
-    mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
-    mapFeatureX = mapFeature.fit_transform(X)
+    # mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
+    # mapFeatureX = mapFeature.fit_transform(X)
+    mapFeatureX = X
+
     T = np.zeros(mapFeatureX.shape[1])
 
     for i in range(num_etiquetas):
         YY = (Y == i + 1) * 1
-        print(i, YY)
         result.append(opt.fmin_tnc(func = costRegression, x0 = T, fprime = gradiente,
             args = (mapFeatureX, YY, l))[0])
-
+        break
     return result
 
 
-def calcularAciertos(X, Y, T):
+def calcularAciertos(X, Y, T, tags):
     aciertos = 0
     j = 0
     for i in range(len(X)):
-        pred = sigmoid(np.dot(X[i], T))
-        if pred >= 0.5 and Y[j] == 1:
-            aciertos += 1
-        elif pred < 0.5 and Y[j] == 0:
-            aciertos += 1
+        for tag in range(tags):
+            pred = sigmoid(np.dot(X[i], T[tag]))
+            if pred < .5:
+                pred = 0
+            else:
+                pred = 1
+
+            if pred == 1 and tag == Y[j]:
+                aciertos += 1
+                break
         j += 1
     return aciertos / len(Y) * 100
 
@@ -94,7 +100,9 @@ def main():
     l = .1
     tags = 10
     result = oneVsAll(X, Y, tags, l)
-    print(calcularAciertos(X, Y, T))
+    np.save('./result.npy', result)
+    result = np.load('./result.npy')
+    print(calcularAciertos(X, Y, result, len(result)))
 
 
 main()
