@@ -109,15 +109,15 @@ if __name__ == '__main__':
     mapFeature = sklearn.preprocessing.PolynomialFeatures(6)
     mapFeatureX = mapFeature.fit_transform(X)
     theta = np.zeros(mapFeatureX.shape[1])
-    l=1
-    print('1.3. Calculo: ', str(coste(theta, mapFeatureX, Y, l), str(gradiente(theta, mapFeatureX, Y, l))))
-
+    l=0.001
+    print('2.2. Calculo: ', str(coste(theta, mapFeatureX, Y, l)), np.array2string(gradiente(theta, mapFeatureX, Y, l)))
     result = opt.fmin_tnc(func=coste, x0=theta, fprime=gradiente, args=(mapFeatureX, Y,l))
     print(result)
     theta_opt = result[0]
     data = np.delete(mapFeatureX, 0, axis=1)
 
     plot_decisionboundary(data, Y, theta_opt,mapFeature)
+    plt.title("Lambda:" + str(l))
     plt.show()
     print("Prediccion con un porcentaje de aciertos de:",
         porcentaje_aciertos(mapFeatureX, Y, theta_opt))
