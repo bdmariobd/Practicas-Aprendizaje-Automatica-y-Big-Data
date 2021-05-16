@@ -35,12 +35,14 @@ def sigmoid(X):
     return 1 / (1 + np.exp(-X))
 
 
-def cost(H, X, Y):
+def cost(H, X, Y, l, T_1, T_2):
     m = len(Y)
     l1 = np.transpose(np.log(H))
     l2 = np.transpose(np.log(1 - H + 1e-6))
     ret = (1 / m) * (-(l1 * Y.T) - ((1 - Y.T) * l2))
-    return np.sum(ret)
+    ret = np.sum(ret)
+    ret += (l / (2 * m)) * (np.sum(T_1**2) + np.sum(T_2**2))
+    return ret
 
 
 def nn(X, theta1, theta2):
@@ -89,7 +91,8 @@ def main():
     theta_1, theta_2 = weights['Theta1'], weights['Theta2']
 
     result = nn(X, theta_1, theta_2)
-    print(cost(result, X, Y_oneHot))
+    l = 1
+    print(cost(result, X, Y_oneHot, l, theta_1, theta_2))
 
 
 main()
