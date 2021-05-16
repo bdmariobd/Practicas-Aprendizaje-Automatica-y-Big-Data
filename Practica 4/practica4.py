@@ -45,17 +45,6 @@ def cost(H, X, Y, l, T_1, T_2):
     return ret
 
 
-def nn(X, theta1, theta2):
-    a1 = X
-    a2 = np.matmul(theta1, a1.T)
-    a2 = sigmoid(a2).T
-    a2 = np.hstack([np.ones([np.shape(a2)[0], 1]), a2])
-    a3 = np.matmul(theta2, a2.T)
-    a3 = sigmoid(a3).T
-
-    return a3
-
-
 def gradient():
     pass
 
@@ -76,7 +65,7 @@ def main():
     data = loadmat('ex4data1.mat')
     Y = data['y'].ravel()
     X = data['X']
-    X = np.hstack([np.ones([np.shape(X)[0], 1]), X])
+    # X = np.hstack([np.ones([np.shape(X)[0], 1]), X])
     m = len(Y)
     input_size = X.shape[1]
     num_labels = 10
@@ -90,9 +79,9 @@ def main():
     weights = loadmat('ex4weights.mat')
     theta_1, theta_2 = weights['Theta1'], weights['Theta2']
 
-    result = nn(X, theta_1, theta_2)
+    A1, A2, H = forward_propagation(X, theta_1, theta_2)
     l = 1
-    print(cost(result, X, Y_oneHot, l, theta_1, theta_2))
+    print(cost(H, X, Y_oneHot, l, theta_1, theta_2))
 
 
 main()
