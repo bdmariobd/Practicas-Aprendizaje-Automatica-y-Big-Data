@@ -109,7 +109,7 @@ if __name__ == '__main__':
     mapFeature = sklearn.preprocessing.PolynomialFeatures(6)
     mapFeatureX = mapFeature.fit_transform(X)
     theta = np.zeros(mapFeatureX.shape[1])
-    l= 0.00000001
+    l= 1
     print('2.2. Calculo: ', str(coste(theta, mapFeatureX, Y, l)), np.array2string(gradiente(theta, mapFeatureX, Y, l)))
     result = opt.fmin_tnc(func=coste, x0=theta, fprime=gradiente, args=(mapFeatureX, Y,l))
     print(result)
