@@ -26,9 +26,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import sklearn.preprocessing
+import sklearn
+from sklearn import preprocessing
 from pandas.io.parsers import read_csv
 import scipy.optimize as opt
+
 
 
 def load_data(file_name):
@@ -61,7 +63,7 @@ def coste(theta, X, Y, l):
     l2 = np.transpose(np.log(1 - H))
 
     ret = (-1 / m) * ((np.matmul(l1, Y)) + (np.matmul(l2, (1 - Y))))
-    return ret + l / (2 * m) * np.sum(H * H)
+    return ret + l / (2 * m) * np.sum(theta * theta)
 
 
 def gradiente(theta, X, Y, l):
@@ -108,7 +110,8 @@ if __name__ == '__main__':
     mapFeatureX = mapFeature.fit_transform(X)
     theta = np.zeros(mapFeatureX.shape[1])
     l=1
-    
+    print('1.3. Calculo: ', str(coste(theta, mapFeatureX, Y, l), str(gradiente(theta, mapFeatureX, Y, l))))
+
     result = opt.fmin_tnc(func=coste, x0=theta, fprime=gradiente, args=(mapFeatureX, Y,l))
     print(result)
     theta_opt = result[0]

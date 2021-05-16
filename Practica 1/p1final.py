@@ -88,7 +88,7 @@ def main():
     data = getMat('./ex1data1.csv')
     X = data[:, 0]
     Y = data[:, 1]
-    alpha = 0.0001
+    alpha = 0.01
     iterations = 1500
 
     theta_0, theta_1 = gradientDescent(X, Y, iterations, alpha)
