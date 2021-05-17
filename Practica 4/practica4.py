@@ -68,10 +68,6 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
     A1, A2, H = forward_propagation(X, theta_1, theta_2)
     D1, D2 = np.zeros(theta_1.shape), np.zeros(theta_2.shape)
     
-    # hasta aqui bien?
-    
-    print(Y, Y.shape)
-    
     for t in range(m):
     	a1t = A1[t, :]
     	a2t = A2[t, :]
@@ -83,6 +79,19 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
     	
     	D1 = D1 + np.dot(d2t[1:, np.newaxis], a1t[np.newaxis, :])
     	D2 = D2 + np.dot(d3t[:, np.newaxis], a2t[np.newaxis, :])
+
+    D1 *= 1 / m
+    D2 *= 1 / m
+    
+    grad1, grad2 = computeNumericalGradient(D1, theta_1), computeNumericalGradient(D2, theta_2)
+    
+    # checkNNGradients(cost,  TODO wrapper de cost, hay que empaquetar como en backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    
+    #for j in range(1, m):
+    #	D1[:][j] += (reg / m) * theta_1[:][j]
+    #	D2[:][j] += (reg / m) * theta_2[:][j]
+    
+    return (cost(H, X, Y, reg, theta_1, theta_2), grad)
 
 
 def main():
