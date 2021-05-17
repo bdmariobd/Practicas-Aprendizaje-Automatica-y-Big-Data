@@ -43,11 +43,7 @@ def cost(H, X, Y, l, T_1, T_2):
     ret = np.sum(ret)
     ret += (l / (2 * m)) * (np.sum(T_1**2) + np.sum(T_2**2))
     return ret
-
-
-def gradient():
-    pass
-
+    
 
 def forward_propagation(X, T1, T2):
     m = X.shape[0]
@@ -59,6 +55,32 @@ def forward_propagation(X, T1, T2):
     H = sigmoid(Z3)
 
     return A1, A2, H
+
+
+# Devuelve una tupla con coste y gradiente
+def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
+    m = X.shape[0]
+    theta_1 = np.reshape(params_rn[:num_ocultas * (num_entradas + 1)],
+    	(num_ocultas, (num_entradas + 1)))
+    theta_2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):],
+    	(num_etiquetas, (num_ocultas + 1)))
+    
+    print(theta_1.shape)
+    print(theta_2.shape)
+    
+    A1, A2, H = forward_propagation(X, theta_1, theta_2)
+    D1, D2 = np.zeros(theta_1.shape), np.zeros(theta_2.shape)
+    
+    for t in range(m):
+    	a1t = A1[t, :]
+    	a2t = A2[t, :]
+    	ht = H[t, :]
+    	yt = Y[t]
+    	
+    	d3t = ht - yt
+    	d2t = np.dot(theta_1.T, d3t) * (a2t * (1 - a2t))
+    	D1 = D1 + np.dot(d2t[1:, np.newaxis], a1t[np.newaxis, :])
+    	D2 = D2 + np.dot(d3t[:, np.newaxis], a2t[np.newaxis, :])
 
 
 def main():
@@ -82,6 +104,14 @@ def main():
     A1, A2, H = forward_propagation(X, theta_1, theta_2)
     l = 1
     print(cost(H, X, Y_oneHot, l, theta_1, theta_2))
+
+    input_layer_size = 400
+    hidden_layer_size = 25
+    num_labels = 10
+    reg = 100 # TODO
+    
+    print(backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2))),
+    	input_layer_size, hidden_layer_size, num_labels, X, Y, reg))
 
 
 main()
