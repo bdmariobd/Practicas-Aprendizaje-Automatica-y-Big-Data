@@ -64,12 +64,13 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
     	(num_ocultas, (num_entradas + 1)))
     theta_2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):],
     	(num_etiquetas, (num_ocultas + 1)))
-    
-    print(theta_1.shape)
-    print(theta_2.shape)
-    
+
     A1, A2, H = forward_propagation(X, theta_1, theta_2)
     D1, D2 = np.zeros(theta_1.shape), np.zeros(theta_2.shape)
+    
+    # hasta aqui bien?
+    
+    print(Y, Y.shape)
     
     for t in range(m):
     	a1t = A1[t, :]
@@ -78,7 +79,8 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
     	yt = Y[t]
     	
     	d3t = ht - yt
-    	d2t = np.dot(theta_1.T, d3t) * (a2t * (1 - a2t))
+    	d2t = np.dot(theta_2.T, d3t) * (a2t * (1 - a2t))
+    	
     	D1 = D1 + np.dot(d2t[1:, np.newaxis], a1t[np.newaxis, :])
     	D2 = D2 + np.dot(d3t[:, np.newaxis], a2t[np.newaxis, :])
 
@@ -111,7 +113,7 @@ def main():
     reg = 100 # TODO
     
     print(backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2))),
-    	input_layer_size, hidden_layer_size, num_labels, X, Y, reg))
+    	input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, reg))
 
 
 main()
