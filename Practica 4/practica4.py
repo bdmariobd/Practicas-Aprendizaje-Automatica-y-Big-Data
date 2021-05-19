@@ -81,8 +81,8 @@ def gradient(X, Y, l, theta_1, theta_2):
     D1 *= 1 / m
     D2 *= 1 / m
     # Regularizacion de todos menos j=0
-    D1[1:, :] += (l / m * theta_1[1:, :])
-    D2[1:, :] += (l / m * theta_2[1:, :])
+    D1[:, 1:] += (l / m * theta_1[:, 1:])
+    D2[:, 1:] += (l / m * theta_2[:, 1:])
     grad = np.concatenate((np.ravel(D1), np.ravel(D2)))
 
     return grad
