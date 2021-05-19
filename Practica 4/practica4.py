@@ -42,9 +42,9 @@ def cost(X, Y, l, T_1, T_2):
     m = len(Y)
     l1 = np.transpose(np.log(H))
     l2 = np.transpose(np.log(1 - H))
-    ret = (1 / m) * (-(l1 * Y.T) - ((1 - Y.T) * l2))
-    ret = np.sum(ret)
-    ret += (l / (2 * m)) * (np.sum(T_1**2) + np.sum(T_2**2))
+    ret = (-(l1.T * Y) - ((1 - Y) * l2.T))
+    ret = np.sum(ret) / m
+    ret += (l / (2 * m)) * (np.sum(np.square(T_1[:,:1])) + np.sum(np.square(T_2[:,:1])))
     return ret
     
 
@@ -123,8 +123,8 @@ def main():
     hidden_layer_size = 25
     num_labels = 10
 
-    
-    print(backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2))),input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l))
+    print(cost(X,Y_oneHot,l,theta_1, theta_2))
+    #print(backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2))),input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l))
     checkNNGradients(backprop,l)
 
 
