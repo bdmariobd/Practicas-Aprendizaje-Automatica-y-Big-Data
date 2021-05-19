@@ -124,9 +124,17 @@ def main():
     hidden_layer_size = 25
     num_labels = 10
 
-    print(cost(X, Y_oneHot, l, theta_1, theta_2))
-    print(backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2))),input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l))
+
     checkNNGradients(backprop, l)
+    
+    params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    #print(backprop(params_rn,input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l))
+    checkNNGradients(backprop,l)
+    
+    theta_1, theta_2 = np.random.uniform(-.12, .12, theta_1.shape), np.random.uniform(-.12, .12, theta_2.shape)
+    params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    result = opt.minimize(backprop,params_rn, args=(input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l), method = 'TNC', options={'maxiter': 70}, jac=True)
+    print(result)
 
 
 main()
