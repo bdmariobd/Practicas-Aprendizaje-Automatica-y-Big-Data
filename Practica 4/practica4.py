@@ -29,16 +29,19 @@ import scipy.optimize as opt
 import sklearn.preprocessing
 
 import displayData, checkNNGradients
+from displayData import *
+from checkNNGradients import *
 
 
 def sigmoid(X):
     return 1 / (1 + np.exp(-X))
 
 
-def cost(H, X, Y, l, T_1, T_2):
+def cost(X, Y, l, T_1, T_2):
+    A1, A2, H = forward_propagation(X, T_1, T_2)
     m = len(Y)
     l1 = np.transpose(np.log(H))
-    l2 = np.transpose(np.log(1 - H + 1e-6))
+    l2 = np.transpose(np.log(1 - H))
     ret = (1 / m) * (-(l1 * Y.T) - ((1 - Y.T) * l2))
     ret = np.sum(ret)
     ret += (l / (2 * m)) * (np.sum(T_1**2) + np.sum(T_2**2))
@@ -57,14 +60,10 @@ def forward_propagation(X, T1, T2):
     return A1, A2, H
 
 
+    
 # Devuelve una tupla con coste y gradiente
-def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
+def gradient(X, Y, l, theta_1, theta_2):
     m = X.shape[0]
-    theta_1 = np.reshape(params_rn[:num_ocultas * (num_entradas + 1)],
-    	(num_ocultas, (num_entradas + 1)))
-    theta_2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):],
-    	(num_etiquetas, (num_ocultas + 1)))
-
     A1, A2, H = forward_propagation(X, theta_1, theta_2)
     D1, D2 = np.zeros(theta_1.shape), np.zeros(theta_2.shape)
     
@@ -79,21 +78,24 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
     	
     	D1 = D1 + np.dot(d2t[1:, np.newaxis], a1t[np.newaxis, :])
     	D2 = D2 + np.dot(d3t[:, np.newaxis], a2t[np.newaxis, :])
-
+        
     D1 *= 1 / m
     D2 *= 1 / m
+    #Regularizacion de todos menos j=0
+    D1[1:,:]+= (l/m * theta_1[1:,:])
+    D2[1:,:] += (l/m * theta_2[1:,:])
+    grad = np.concatenate((np.ravel(D1), np.ravel(D2)))
     
-    grad1, grad2 = computeNumericalGradient(D1, theta_1), computeNumericalGradient(D2, theta_2)
-    
-    # checkNNGradients(cost,  TODO wrapper de cost, hay que empaquetar como en backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2)))
-    
-    #for j in range(1, m):
-    #	D1[:][j] += (reg / m) * theta_1[:][j]
-    #	D2[:][j] += (reg / m) * theta_2[:][j]
-    
-    return (cost(H, X, Y, reg, theta_1, theta_2), grad)
+    return grad
 
-
+def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
+    theta_1 = np.reshape(params_rn[:num_ocultas * (num_entradas + 1)],
+    	(num_ocultas, (num_entradas + 1)))
+    theta_2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):],
+    	(num_etiquetas, (num_ocultas + 1)))
+    
+    return (cost(X, Y, reg, theta_1, theta_2), gradient(X, Y, reg, theta_1, theta_2))
+    
 def main():
     data = loadmat('ex4data1.mat')
     Y = data['y'].ravel()
@@ -111,18 +113,19 @@ def main():
 
     weights = loadmat('ex4weights.mat')
     theta_1, theta_2 = weights['Theta1'], weights['Theta2']
+    
+    sample = np.random.choice(X.shape[0],100)
+    image = displayData(X[sample,:])
 
-    A1, A2, H = forward_propagation(X, theta_1, theta_2)
     l = 1
-    print(cost(H, X, Y_oneHot, l, theta_1, theta_2))
 
     input_layer_size = 400
     hidden_layer_size = 25
     num_labels = 10
-    reg = 100 # TODO
+
     
-    print(backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2))),
-    	input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, reg))
+    print(backprop(np.append(np.ravel(theta_1),(np.ravel(theta_2))),input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l))
+    checkNNGradients(backprop,l)
 
 
 main()
