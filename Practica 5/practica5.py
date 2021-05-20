@@ -31,42 +31,38 @@ import sklearn.preprocessing
 
 
 def hypothesis(X, T):
-	return X * T[0][0] + T[0][1]
+	return np.dot(X, T)
 
 
-def cost(X, Y, l, T):
-    H = hypothesis(X, T)
-    m = X.shape[0]
-    ret = (1 / (2 * m)) * (np.sum(np.square(H - Y)))
-    ret += (l / (2 * m)) * (np.sum(np.square(T[:, 1:])))
-    return ret
+def cost(T, X, Y, l):
+	m = X.shape[0]
+	ret = 0
+	for row in range(len(X)):
+		H = hypothesis(X[row], T)
+		ret += np.square(H - Y[row])
+
+	ret = (1 / (2 * m)) * ret
+	ret += (l / (2 * m)) * (np.sum(np.square(T[1:])))
+	return ret
     
     
 def gradient(X, Y, l, T):
 	m = X.shape[0]
-	H = hypothesis(X, T)
 	D1 = np.zeros(T.shape)
-	A1 = np.hstack([np.ones([m, 1]), X])
 
-	for t in range(m):
-		a1t = A1[t, :]
-		ht = H[t, :]
-		yt = Y[t]
-
-		d3t = ht - yt
-		d2t = np.dot(T.T, d3t)
-
-		D1 += np.dot(d2t[1:, np.newaxis], a1t[np.newaxis, :])
-
-	D1 *= 1 / m
+	for row in range(len(X)):
+		H = hypothesis(X[row], T)
+		D1 += (H - Y[row]) * X[row]
+		
+	D1 /= m
 	# Regularizacion de todos menos j=0
-	D1[:, 1:] += (l / m * T[:, 1:])
+	D1[1:] += (l / m * T[1:])
 
 	return D1
 
 
 def costAndGrad(X, Y, T, l):
-	return cost(X, Y, l, T), gradient(X, Y, l, T)
+	return cost(T, X, Y, l), gradient(X, Y, l, T)
 
 def main():
 	data = io.loadmat('./ex5data1.mat')
@@ -74,9 +70,27 @@ def main():
 	Xval, Yval = data['Xval'], data['yval']
 	Xtest, Ytest = data['Xtest'], data['ytest']
     
+	X = np.hstack([np.ones([np.shape(X)[0], 1]), X])
 	l = 1
-	T = np.ones((1, 2))
-	print(cost(X, Y, l, T))
+	T = np.array([ 1, 1 ])
+	
 	print(costAndGrad(X, Y, T, l))
+	res = (opt.minimize(fun=cost, x0=T, args=(X, Y, l)))
+	# y = hypothesis(X, res)
+	
+	print(res)
+	x = np.linspace(min(X[1]), max(X[1]), 100)
+	y = []
+	for row in range(len(X)):
+		y.append(hypothesis(X[row], T))
+	plt.suptitle('Result')
+	plt.xlabel('City population in 10k\'s')
+	plt.ylabel('Income in 10k\'s')
+	plt.plot(X, Y, 'x')
+	plt.plot(X, Y, label=('y = ' + str('') + 'x + ' + str('')))
+	plt.legend()
+	# plt.savefig('result.png')
+	plt.show()
+
 
 main()
