@@ -133,8 +133,19 @@ def main():
     
     theta_1, theta_2 = np.random.uniform(-.12, .12, theta_1.shape), np.random.uniform(-.12, .12, theta_2.shape)
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    
     result = opt.minimize(backprop,params_rn, args=(input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l), method = 'TNC', options={'maxiter': 70}, jac=True)
+    
+    theta_1= np.reshape(result.x[:25 * (400 + 1)], (25, (400 + 1)))
+    theta_2 = np.reshape(result.x[25 * (400 + 1):], (10, (25 + 1)))
+    
     print(result)
+    
+    results[2] = forward_propagation(X, theta_1, theta_2)
+    
+    
+    print("El porcentaje de acierto del modelo es: ")
+
 
 
 main()
