@@ -65,32 +65,33 @@ def costAndGrad(X, Y, T, l):
 	return cost(T, X, Y, l), gradient(X, Y, l, T)
 
 def main():
-	data = io.loadmat('./ex5data1.mat')
-	X, Y = data['X'], data['y']
-	Xval, Yval = data['Xval'], data['yval']
-	Xtest, Ytest = data['Xtest'], data['ytest']
+    data = io.loadmat('./ex5data1.mat')
+    X, Y = data['X'], data['y']
+    Xval, Yval = data['Xval'], data['yval']
+    Xtest, Ytest = data['Xtest'], data['ytest']
+    plt.plot(X,Y,'x')
+    X_ones = np.hstack([np.ones([np.shape(X)[0], 1]), X])
+    l = 1
+    T = np.array([ 1, 1 ])
+	
+    print(costAndGrad(X_ones, Y, T, l))
+    res = (opt.minimize(fun=cost, x0=T, args=(X_ones, Y, 0))).x
     
-	X = np.hstack([np.ones([np.shape(X)[0], 1]), X])
-	l = 1
-	T = np.array([ 1, 1 ])
-	
-	print(costAndGrad(X, Y, T, l))
-	res = (opt.minimize(fun=cost, x0=T, args=(X, Y, l)))
-	# y = hypothesis(X, res)
-	
-	print(res)
-	x = np.linspace(min(X[1]), max(X[1]), 100)
-	y = []
-	for row in range(len(X)):
-		y.append(hypothesis(X[row], T))
-	plt.suptitle('Result')
-	plt.xlabel('City population in 10k\'s')
-	plt.ylabel('Income in 10k\'s')
-	plt.plot(X, Y, 'x')
-	plt.plot(X, Y, label=('y = ' + str('') + 'x + ' + str('')))
-	plt.legend()
+    plt.plot(X,Y,'x')
+    theta_0, theta_1 = res[0], res[1]
+    x = np.linspace(min(X), max(X), 100)
+    y = theta_0 + theta_1 * x
+    plt.plot(x, y, label=('y = ' + str(theta_1) + 'x + ' + str(theta_0)))
+    plt.suptitle('Result')
+    plt.xlabel('Change in water level\'s')
+    plt.ylabel('Water flowing out of the dam\'s')
 	# plt.savefig('result.png')
-	plt.show()
+    plt.show()
+	# y = hypothesis(X, res)
+
+
+    
+
 
 
 main()
