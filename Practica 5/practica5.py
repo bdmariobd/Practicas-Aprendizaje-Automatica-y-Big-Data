@@ -214,6 +214,9 @@ def main():
     
     plt.plot(lambdas,train_errors, label='Train')
     plt.plot(lambdas,validation_errors, label='CrossVal')
+    plt.suptitle('Selecting lambda using a cross validation set')
+    plt.xlabel('lambda')
+    plt.ylabel('Error')
     plt.legend()
     
     l=3
