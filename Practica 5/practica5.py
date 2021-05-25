@@ -76,6 +76,31 @@ def get_errors(X,Y, Xval, Yval,l):
         
     return (train_errors ,validation_errors)
 
+def polynomial(X,p):
+    polynomial = X
+    for i in range(1, p):
+        polynomial = np.column_stack((polynomial, np.power(X, i+1)))   
+    return polynomial
+
+def normalize(X):
+    avg = np.mean(X,axis=0)
+    standard_deviation = np.std(X,axis=0)
+    normalized = (X - avg) / standard_deviation
+    
+    return (normalized, avg, standard_deviation)
+
+def plot_decisionboundary(X, Y, theta, poly):
+    x1_min, x1_max = X[:, 0].min(), X[:, 0].max()
+    x2_min, x2_max = X[:, 1].min(), X[:, 1].max()
+    xx1, xx2 = np.meshgrid(np.linspace(x1_min, x1_max),
+        np.linspace(x2_min, x2_max))
+    h = sigmoide(poly.fit_transform(np.c_[xx1.ravel(),
+        xx2.ravel()]).dot(theta))
+    h = h.reshape(xx1.shape)
+    plt.contour(xx1, xx2, h, [0.5], linewidths=1, colors='g')
+    plt.savefig("boundary.pdf")
+
+
 def main():
     data = io.loadmat('./ex5data1.mat')
     X, Y = data['X'], data['y']
@@ -111,6 +136,18 @@ def main():
     plt.ylabel('Error')
     plt.show()
     
+    X_normalized, avg, standard_deviation  = normalize(polynomial(X,8))
+    X_normalized_ones=np.hstack([np.ones([X_normalized.shape[0],1]),X_normalized])
+    
+    T = np.zeros(X_normalized_ones.shape[1])
+
+    res = (opt.minimize(fun=cost, x0=T, args=(X_normalized_ones, Y, 0))).x
+    
+
+    plt.plot(X,Y,'x')
+    plt.plot(polyline, res)
+    plt.show()
+    print(res)
     
 
 
