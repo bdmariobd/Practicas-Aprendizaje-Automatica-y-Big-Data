@@ -1,4 +1,3 @@
-def getVocabDict(reverse=False):
     """
     Function to read in the supplied vocab list text file into a dictionary.
     Dictionary key is the stemmed word, value is the index in the text file

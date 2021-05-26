@@ -71,7 +71,14 @@ def selectCandSigma(X,Y,Xval,Yval):
     print('C=' + str(bestC) + ' BestSigma =' + str(bestSigma))
     visualize_boundary(X,Y,svm)
     
-            
+def get_data(email):
+    words = getVocabDict()
+    mail = np.zeros(len(words))
+    for word in email:
+        if (word in words):
+            mail[words[word]] = True
+        
+    return mail
             
 def main():
     data1, data2, data3 = io.loadmat('./p6/ex6data1.mat'), io.loadmat('./p6/ex6data2.mat'), io.loadmat('./p6/ex6data3.mat')
@@ -99,6 +106,12 @@ def main():
     selectCandSigma(X3,Y3,X3val,Y3val)
     
     #2. Detección de spam
+    
+    email_contents = open('./p6/spam/0001.txt', 'r', encoding='utf-8', errors='ignore').read()
+    email = email2TokenList(email_contents)
+    
+    mail = get_data(email)
+    print(mail)
     
             
 main()
