@@ -68,10 +68,7 @@ def selectCandSigma(X,Y,Xval,Yval):
                 bestScore = score
                 bestC = C
                 
-    svm = SVC(kernel='rbf', C=bestC, gamma=1 / ( 2 * bestSigma **2))
-    svm.fit(X, Y.ravel())
-    print('C=' + str(bestC) + ' BestSigma =' + str(bestSigma))
-    visualize_boundary(X,Y,svm)
+    return bestC, bestSigma, bestScore
     
     
 def get_data(email):
@@ -107,22 +104,26 @@ def main():
     visualize_boundary(X2,Y2,svm)
     
     #1.3. Elección de los parámetros C y sigma
-    selectCandSigma(X3,Y3,X3val,Y3val)
-    
+    C, sigma, score = selectCandSigma(X3,Y3,X3val,Y3val)
+    svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
+    svm.fit(X3, Y3.ravel())
+    print('C=' + str(C) + ' BestSigma =' + str(sigma))
+    visualize_boundary(X3,Y3,svm)
     #2. Detección de spam
     
     Xmails = []
     
+    print("Leyendo spam")
     for i in range (1, 501):
         email_contents = codecs.open('./p6/{0}/{1:04d}.txt'.format('spam', i), 'r', encoding='utf-8', errors='ignore').read()
         email = email2TokenList(email_contents)
         Xmails.append(get_data(email))
-        
+    print("Leyendo easyham")
     for i in range (1, 2552):
         email_contents = codecs.open('./p6/{0}/{1:04d}.txt'.format('easy_ham', i), 'r', encoding='utf-8', errors='ignore').read()
         email = email2TokenList(email_contents)
         Xmails.append(get_data(email))
-        
+    print("Leyendo hardham")   
     for i in range (1, 251):
         email_contents = codecs.open('./p6/{0}/{1:04d}.txt'.format('hard_ham', i), 'r', encoding='utf-8', errors='ignore').read()
         email = email2TokenList(email_contents)
@@ -133,19 +134,13 @@ def main():
     
     print("He randomizado los ejemplos")
     
-    C, sigma = selectCandSigma(Xmails, Ymails, Xmails, Ymails)
-    svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
-    svm.fit(Xmails, Ymails.ravel())
-    score = accuracy_score(Ymails, svm.predict(Xmails))
+    C, sigma, score = selectCandSigma(Xmails, Ymails, Xmails, Ymails)
     print ("Precision sin entrenamiento y validacion: ", score)
     
     
     Xvalmails, Yvalmails = Xmails[:int(len(Xmails)*0.75)], Ymails[:int(len(Ymails)*0.75)]
     Xtrainmails, Ytrainmails = Xmails[int(len(Xmails)*0.75):], Ymails[int(len(Ymails)*0.75):]
-    C, sigma = selectCandSigma(Xtrainmails, Ytrainmails, Xvalmails, Yvalmails)
-    svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
-    svm.fit(Xtrainmails, Ytrainmails.ravel())
-    score = accuracy_score(Ytrainmails, svm.predict(Xtrainmails))
+    C, sigma, score  = selectCandSigma(Xtrainmails, Ytrainmails, Xvalmails, Yvalmails)
     print ("Precision con entrenamiento (75% de los casos) y validacion(25% de los casos): ", score)
     
             
