@@ -28,4 +28,77 @@ from scipy.io import loadmat
 import scipy.optimize as opt
 import scipy.io as io
 import sklearn.preprocessing
+from sklearn.svm import SVC 
+from sklearn.metrics import accuracy_score
+import process_email, get_vocab_dict
+from process_email import *
+from get_vocab_dict import *
 
+
+def visualize_boundary(X, y, svm, file_name=''):
+     x1 = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
+     x2 = np.linspace(X[:, 1].min(), X[:, 1].max(), 100)
+     x1, x2 = np.meshgrid(x1, x2)
+     yp = svm.predict(np.array([x1.ravel(), x2.ravel()]).T).reshape(x1.shape)
+     pos = (y == 1).ravel()
+     neg = (y == 0).ravel()
+     plt.figure()
+     plt.scatter(X[pos, 0], X[pos, 1], color='black', marker='+')
+     plt.scatter(
+     X[neg, 0], X[neg, 1], color='yellow', edgecolors='black', marker='o')
+     plt.contour(x1, x2, yp)
+     plt.show()
+     plt.close()
+     
+     
+def selectCandSigma(X,Y,Xval,Yval):
+    parameters = [0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30]
+    bestC = 0
+    bestSigma = 0
+    bestScore = 0
+    for C in parameters:
+        for sigma in parameters:
+            svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
+            svm.fit(X, Y)
+            score = accuracy_score(Yval, svm.predict(Xval))
+            if(bestScore < score):
+                bestSigma = sigma
+                bestScore = score
+                bestC = C
+                
+    svm = SVC(kernel='rbf', C=bestC, gamma=1 / ( 2 * bestSigma **2))
+    svm.fit(X, Y)
+    print('C=' + str(bestC) + ' BestSigma =' + str(bestSigma))
+    visualize_boundary(X,Y,svm)
+    
+            
+            
+def main():
+    data1, data2, data3 = io.loadmat('./p6/ex6data1.mat'), io.loadmat('./p6/ex6data2.mat'), io.loadmat('./p6/ex6data3.mat')
+    X1, Y1 = data1['X'], data1['y']
+    X2, Y2 = data2['X'], data2['y']
+    X3, Y3 = data3['X'], data3['y']
+    X3val, Y3val = data3['Xval'], data3['yval']
+    
+    #1.1. Kernel lineal
+    svm = SVC(kernel='linear', C=1.0)
+    svm.fit(X1, Y1)
+    visualize_boundary(X1,Y1,svm)
+    
+    svm = SVC(kernel='linear', C=100.0)
+    svm.fit(X1, Y1)
+    visualize_boundary(X1,Y1,svm)
+    
+    #1.2. Kernel gaussiano
+    sigma = 0.1
+    svm = SVC(kernel='rbf', C=1, gamma=1 / ( 2 * sigma **2))
+    svm.fit(X2, Y2)
+    visualize_boundary(X2,Y2,svm)
+    
+    #1.3. Elección de los parámetros C y sigma
+    selectCandSigma(X3,Y3,X3val,Y3val)
+    
+    #2. Detección de spam
+    
+            
+main()
