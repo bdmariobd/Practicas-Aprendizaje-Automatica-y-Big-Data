@@ -29,10 +29,12 @@ import scipy.optimize as opt
 import scipy.io as io
 import sklearn.preprocessing
 from sklearn.svm import SVC 
+from sklearn.utils import shuffle
 from sklearn.metrics import accuracy_score
 import process_email, get_vocab_dict
 from process_email import *
 from get_vocab_dict import *
+import codecs
 
 
 def visualize_boundary(X, y, svm, file_name=''):
@@ -59,7 +61,7 @@ def selectCandSigma(X,Y,Xval,Yval):
     for C in parameters:
         for sigma in parameters:
             svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
-            svm.fit(X, Y)
+            svm.fit(X, Y.ravel())
             score = accuracy_score(Yval, svm.predict(Xval))
             if(bestScore < score):
                 bestSigma = sigma
@@ -67,18 +69,20 @@ def selectCandSigma(X,Y,Xval,Yval):
                 bestC = C
                 
     svm = SVC(kernel='rbf', C=bestC, gamma=1 / ( 2 * bestSigma **2))
-    svm.fit(X, Y)
+    svm.fit(X, Y.ravel())
     print('C=' + str(bestC) + ' BestSigma =' + str(bestSigma))
     visualize_boundary(X,Y,svm)
     
+    
 def get_data(email):
     words = getVocabDict()
-    mail = np.zeros(len(words))
+    mail = np.zeros(len(words)+1)
     for word in email:
         if (word in words):
-            mail[words[word]] = True
+            mail[words[word]] = 1
         
     return mail
+
             
 def main():
     data1, data2, data3 = io.loadmat('./p6/ex6data1.mat'), io.loadmat('./p6/ex6data2.mat'), io.loadmat('./p6/ex6data3.mat')
@@ -89,17 +93,17 @@ def main():
     
     #1.1. Kernel lineal
     svm = SVC(kernel='linear', C=1.0)
-    svm.fit(X1, Y1)
+    svm.fit(X1, Y1.ravel())
     visualize_boundary(X1,Y1,svm)
     
     svm = SVC(kernel='linear', C=100.0)
-    svm.fit(X1, Y1)
+    svm.fit(X1, Y1.ravel())
     visualize_boundary(X1,Y1,svm)
     
     #1.2. Kernel gaussiano
     sigma = 0.1
     svm = SVC(kernel='rbf', C=1, gamma=1 / ( 2 * sigma **2))
-    svm.fit(X2, Y2)
+    svm.fit(X2, Y2.ravel())
     visualize_boundary(X2,Y2,svm)
     
     #1.3. Elección de los parámetros C y sigma
@@ -107,11 +111,42 @@ def main():
     
     #2. Detección de spam
     
-    email_contents = open('./p6/spam/0001.txt', 'r', encoding='utf-8', errors='ignore').read()
-    email = email2TokenList(email_contents)
+    Xmails = []
     
-    mail = get_data(email)
-    print(mail)
+    for i in range (1, 501):
+        email_contents = codecs.open('./p6/{0}/{1:04d}.txt'.format('spam', i), 'r', encoding='utf-8', errors='ignore').read()
+        email = email2TokenList(email_contents)
+        Xmails.append(get_data(email))
+        
+    for i in range (1, 2552):
+        email_contents = codecs.open('./p6/{0}/{1:04d}.txt'.format('easy_ham', i), 'r', encoding='utf-8', errors='ignore').read()
+        email = email2TokenList(email_contents)
+        Xmails.append(get_data(email))
+        
+    for i in range (1, 251):
+        email_contents = codecs.open('./p6/{0}/{1:04d}.txt'.format('hard_ham', i), 'r', encoding='utf-8', errors='ignore').read()
+        email = email2TokenList(email_contents)
+        Xmails.append(get_data(email))
+    
+    Ymails = np.concatenate((np.ones(500), np.zeros(2551), np.zeros(250)))
+    Xmails, Ymails = shuffle(Xmails, Ymails, random_state=0)
+    
+    print("He randomizado los ejemplos")
+    
+    C, sigma = selectCandSigma(Xmails, Ymails, Xmails, Ymails)
+    svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
+    svm.fit(Xmails, Ymails.ravel())
+    score = accuracy_score(Ymails, svm.predict(Xmails))
+    print ("Precision sin entrenamiento y validacion: ", score)
+    
+    
+    Xvalmails, Yvalmails = Xmails[:int(len(Xmails)*0.75)], Ymails[:int(len(Ymails)*0.75)]
+    Xtrainmails, Ytrainmails = Xmails[int(len(Xmails)*0.75):], Ymails[int(len(Ymails)*0.75):]
+    C, sigma = selectCandSigma(Xtrainmails, Ytrainmails, Xvalmails, Yvalmails)
+    svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
+    svm.fit(Xtrainmails, Ytrainmails.ravel())
+    score = accuracy_score(Ytrainmails, svm.predict(Xtrainmails))
+    print ("Precision con entrenamiento (75% de los casos) y validacion(25% de los casos): ", score)
     
             
 main()
