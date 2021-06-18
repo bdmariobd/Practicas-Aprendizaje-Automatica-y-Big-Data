@@ -134,14 +134,18 @@ def main():
     
     print("He randomizado los ejemplos")
     
-    C, sigma, score = selectCandSigma(Xmails, Ymails, Xmails, Ymails)
-    print ("Precision sin entrenamiento y validacion: ", score)
+    #C, sigma, score = selectCandSigma(Xmails, Ymails, Xmails, Ymails)
+    #print ("Precision sin entrenamiento y validacion: ", score)
     
     
     Xvalmails, Yvalmails = Xmails[:int(len(Xmails)*0.75)], Ymails[:int(len(Ymails)*0.75)]
     Xtrainmails, Ytrainmails = Xmails[int(len(Xmails)*0.75):], Ymails[int(len(Ymails)*0.75):]
     C, sigma, score  = selectCandSigma(Xtrainmails, Ytrainmails, Xvalmails, Yvalmails)
     print ("Precision con entrenamiento (75% de los casos) y validacion(25% de los casos): ", score)
+    print('C=' + str(C) + ' BestSigma =' + str(sigma))
+    svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
+    svm.fit(Xmails, Ymails.ravel())
+    visualize_boundary(Xmails,Ymails,svm)
     
             
 main()
