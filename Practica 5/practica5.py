@@ -221,13 +221,17 @@ def main():
     
     l=3
     
-    initial_thetas = np.zeros(X_normalized_ones.shape[1])
-    T = opt.minimize(fun=cost, x0=initial_thetas, args=(X_normalized_ones,Y,l)).x
+    #initial_thetas = np.zeros(X_normalized_ones.shape[1])
+    #T = opt.minimize(fun=cost, x0=initial_thetas, args=(X_normalized_ones,Y,l)).x
 
     Xtest_polynomial = polynomial(Xtest,8)
     Xtest_polynomial_normal = (Xtest_polynomial - avg) / standard_deviation
     Xtest_polynomial_normal_ones = np.hstack([np.ones([Xtest_polynomial_normal.shape[0],1]),Xtest_polynomial_normal])
-    errors_test=cost(T,Xtest_polynomial_normal_ones,Ytest,0)
+    
+    initial_thetas = np.zeros(Xtest_polynomial_normal_ones.shape[1])
+    T = opt.minimize(fun=cost, x0=initial_thetas, args=(Xtest_polynomial_normal_ones,Ytest,l)).x
+    
+    errors_test=cost(T,Xtest_polynomial_normal_ones,Ytest,l)
     print(errors_test)
     
 
