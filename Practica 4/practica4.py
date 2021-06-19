@@ -141,7 +141,7 @@ def main():
     
     print(result)
     
-    results[2] = forward_propagation(X, theta_1, theta_2)
+    #results[2] = forward_propagation(X, theta_1, theta_2)
     
     
     print("El porcentaje de acierto del modelo es: ")
