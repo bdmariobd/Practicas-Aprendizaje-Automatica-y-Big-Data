@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE
 
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
@@ -96,6 +97,17 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
 
     return (cost(X, Y, reg, theta_1, theta_2), gradient(X, Y, reg, theta_1, theta_2))
 
+def calcularAciertos(X, Y, T1, T2):
+    aciertos = 0
+    j = 0
+    tags = len(T2)
+    pred = forward_propagation(X, T1, T2)[2]
+    for i in range(len(X)):
+        maxi = np.argmax(pred[i])
+        if Y[i] == maxi:
+            aciertos += 1
+        j += 1
+    return aciertos / len(Y) * 100
 
 def main():
     data = loadmat('ex4data1.mat')
@@ -125,26 +137,24 @@ def main():
     num_labels = 10
 
 
-    checkNNGradients(backprop, l)
-    
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
-    #print(backprop(params_rn,input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l))
+    
+    print("Coste sin regularizacion: ",backprop(params_rn,input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, 0)[0])
+    print("Coste con regularizacion: ",backprop(params_rn,input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l)[0])
+    
+    checkNNGradients(backprop,0)
     checkNNGradients(backprop,l)
     
     theta_1, theta_2 = np.random.uniform(-.12, .12, theta_1.shape), np.random.uniform(-.12, .12, theta_2.shape)
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
     
-    result = opt.minimize(backprop,params_rn, args=(input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l), method = 'TNC', options={'maxiter': 70}, jac=True)
+    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l), method = 'TNC', options={'maxiter': 70}, jac=True)
     
     theta_1= np.reshape(result.x[:25 * (400 + 1)], (25, (400 + 1)))
     theta_2 = np.reshape(result.x[25 * (400 + 1):], (10, (25 + 1)))
+       
     
-    print(result)
-    
-    #results[2] = forward_propagation(X, theta_1, theta_2)
-    
-    
-    print("El porcentaje de acierto del modelo es: ")
+    print("El porcentaje de acierto del modelo es: ", calcularAciertos(X,Y,theta_1,theta_2))
 
 
 
