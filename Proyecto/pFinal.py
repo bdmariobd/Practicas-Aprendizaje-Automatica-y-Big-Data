@@ -30,29 +30,49 @@ import scipy.optimize as opt
 
 
 def load_data(file_name):
-    return read_csv(file_name, header=None).values        
+    return read_csv(file_name)     
  
+        
+def data_visualization(X,Y):
+    X.hist(figsize=(10,10))
+    plt.tight_layout()
+    
     
 def print_data(X, Y):
     pos = np.where(Y == 1)
     # Dibuja los ejemplos positivos
-    plt.scatter(X[pos, 0], X[pos, 1], marker='+', c='k')
+    plt.scatter(X[pos, 0], X[pos, 1], marker='.', c='blue',s=0.1)
     pos = np.where(Y == 0)
-    plt.scatter(X[pos, 0], X[pos, 1], marker='o', c='b')
-    plt.savefig("data.pdf")
+    plt.scatter(X[pos, 0], X[pos, 1], marker='.', c='red', s=0.1)
     plt.legend(
         handles=[
-            mpatches.Patch(color='black', label='Accepted'),
-            mpatches.Patch(color='blue', label='Refused')
+            mpatches.Patch(color='blue', label='Blue win'),
+            mpatches.Patch(color='red', label='Red win')
         ])
-    
-    
-    
+    plt.show()
+
 def main():
-    #Lectura de los datos
+    #Visualizacion de los datos
+    
     datos = load_data('./MatchTimelinesFirst15.csv')
-    X = datos[1:,3:]
-    Y = datos[1:, 2:3]
+    datos = datos.drop(['index','matchId', 'blueDragonKills', 'redDragonKills' ], axis=1)
+    datos.describe()
+    datos.hist(figsize=(10,10))
+    plt.tight_layout()
+    plt.show()
+    
+    
+    #Lectura de los datos
+    
+    datos= datos.values
+    X = datos[:,1:]
+    Y = datos[:, 0:1]
+    
+    print_data(X,Y)
+    
+    
+    
+    
     
     
             
