@@ -25,10 +25,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from sklearn.utils import shuffle
 from pandas.io.parsers import read_csv
 import scipy.optimize as opt
 import re
 import pandas as pd
+import seaborn as sns
+from sklearn import preprocessing
 
 def load_data(file_name):
     return read_csv(file_name)     
@@ -79,6 +82,9 @@ def normalize(X):
 
     return (normalized, avg, standard_deviation)
 
+def scale(X):
+    scaler = preprocessing.StandardScaler().fit(X)
+    return scaler.transform(X)
 
 def sigmoide(Z):
     return 1 / (1 + np.exp(-Z))
@@ -88,8 +94,8 @@ def coste(theta, X, Y, l):
     m = np.shape(X)[0]
     H = sigmoide(X.dot(theta))
     
-    l1 = np.transpose(np.log(H))
-    l2 = np.transpose(np.log(1 - H))
+    l1 = np.transpose(np.log(H + 1e-06))
+    l2 = np.transpose(np.log(1 - H + 1e-06))
 
     ret = (-1 / m) * ((np.matmul(l1, Y)) + (np.matmul(l2, (1 - Y))))
     return ret + (l / (2 * m)) * np.sum(H * H)
@@ -114,7 +120,7 @@ def porcentaje_aciertos(X, Y, theta):
     return aciertos / len(Y) * 100
 
 def test_different_values(X,Y,Theta):
-    parameters = [0.0001, 0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30,100,150,300,1000,3000]
+    parameters = [0, 0.0000001, 0.00001, 0.0001, 0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30,100,150]#,200,250,300]
     plt.xlabel("Regularization term")
     plt.ylabel("Success")
     success=[]
@@ -128,18 +134,64 @@ def test_different_values(X,Y,Theta):
     plt.scatter(parameters,success)
     plt.plot(parameters,success)
     
+def get_errors(X, Y, Xval, Yval, l):
+    train_errors = []
+    validation_errors = []
+    m = X.shape[0]
+    for i in range(1, m, 1000):
+        T = np.zeros(X.shape[1])
+        thetas = opt.minimize(fun=coste, x0=T, args=(X[0:i], Y[0:i], l)).x
+        #thetas= opt.fmin_tnc(disp=0, func=coste, x0=T, fprime=gradiente, args=(X[0:i], Y[0:i],l))[0]
+        train_errors.append(coste(thetas, X[0:i], Y[0:i], l))
+        validation_errors.append(coste(thetas, Xval, Yval, l))
+
+    return (train_errors, validation_errors)
+
+    
+def learning_curve(X,Y,Xval,Yval,l):
+    train_errors, value_errors = get_errors(X, Y, Xval, Yval, l)
+    x = np.linspace(1, len(train_errors), len(train_errors))
+    plt.plot(x, train_errors, label='Train')
+    x = np.linspace(1, len(train_errors), len(train_errors))
+    plt.plot(x, value_errors, label='CrossVal')
+    plt.legend()
+    plt.suptitle('Learning curve for linear regression (lambda =' +str(l) + ')')
+    plt.xlabel('Number of training examples')
+    plt.ylabel('Error')
+    plt.show()
+    
+    
+def opt_regresion_parameter(X,Y,Xval,Yval):
+    lambdas =[0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10,20,100,200]
+    train_errors = []
+    validation_errors = []
+
+    for i in lambdas:
+        initial_thetas = np.zeros(X.shape[1])
+        T = opt.minimize(fun=coste, x0=initial_thetas, args=(X,Y,i)).x
+        train_errors.append(coste(T,X,Y,i))
+        validation_errors.append(coste(T,Xval,Yval,i))
+    
+    plt.plot(lambdas,train_errors, label='Train')
+    plt.plot(lambdas,validation_errors, label='CrossVal')
+    plt.suptitle('Selecting lambda using a cross validation set')
+    plt.xlabel('lambda')
+    plt.ylabel('Error')
+    plt.legend()
+    
 def main():
     #Visualizacion de los datos
     
     datos = load_data('./MatchTimelinesFirst15.csv')
     datos = datos.drop(['index','matchId', 'blueDragonKills', 'redDragonKills'], axis=1)
+    datos= datos.sample(frac=1)
     pd.set_option('display.max_columns',500)
     print(datos.describe(include='all'))
     datos.style
     datos.hist(figsize=(10,10))
     plt.tight_layout()
     plt.show()
-    
+    #sns.pairplot(datos, corner=True, hue = 'blue_win')
     
     #Lectura de los datos
     
@@ -148,24 +200,34 @@ def main():
     print(header.values)
     X = data[:,1:]
     Y = data[:, 0]
-    
+        
     #print_all_grapfs(X,Y,header)
-    X_normalized = normalize(X)[0]
+    X_normalized = scale(X)
     X_normalized = np.hstack([np.ones([np.shape(X_normalized)[0], 1]), X_normalized])
-    theta = np.zeros(X_normalized.shape[1])
+    
+    
+    Xtrain, Ytrain = X_normalized[int(len(X_normalized)*0.60):], Y[int(len(Y)*0.60):] #train theta : 60%
+    Xtemp, Ytemp = X_normalized[:int(len(X_normalized)*0.40)], Y[:int(len(Y)*0.40)]
+    
+    Xval, Yval = Xtemp[int(len(Xtemp)*0.50):], Ytemp[int(len(Ytemp)*0.50):] #validation: 20%
+    Xtest, Ytest = Xtemp[:int(len(Xtemp)*0.50)], Ytemp[:int(len(Ytemp)*0.50)] #test: 20%
+    
+    theta = np.zeros(Xtrain.shape[1])
     l= 1
-    #print('Coste: ', str(coste(theta, X_normalized, Y, l)))
-    #print('Gradiente: ', np.array2string(gradiente(theta, X_normalized, Y, l)))
-    result = opt.fmin_tnc(disp=0, func=coste, x0=theta, fprime=gradiente, args=(X_normalized, Y,l))
+    #print('Coste: ', str(coste(theta, Xtrain, Ytrain, l)))
+    #print('Gradiente: ', np.array2string(gradiente(theta, Xtrain, Ytrain, l)))
+    result = opt.fmin_tnc(disp=0, func=coste, x0=theta, fprime=gradiente, args=(Xtrain, Ytrain,l))
     #print(result)
     theta_opt = result[0]
     print("Prediccion con un porcentaje de aciertos de:",
-        porcentaje_aciertos(X_normalized, Y, theta_opt))
+        porcentaje_aciertos(Xtrain,Ytrain, theta_opt))
     
-    test_different_values(X_normalized, Y, theta)
-    
-    
-    
-    
+    #test_different_values(Xtrain, Ytrain, theta)
+    # learning_curve(Xtrain,Ytrain,Xval,Yval,0)
+    # learning_curve(Xtrain,Ytrain,Xval,Yval,1)
+    # learning_curve(Xtrain,Ytrain,Xval,Yval,20)
+    # learning_curve(Xtrain,Ytrain,Xval,Yval,100)
+    # learning_curve(Xtrain,Ytrain,Xval,Yval,200)
+    opt_regresion_parameter(Xtest,Ytest,Xval,Yval)
             
 main()
