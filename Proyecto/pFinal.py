@@ -32,6 +32,8 @@ import re
 import pandas as pd
 import seaborn as sns
 from sklearn import preprocessing
+from sklearn.svm import SVC 
+from sklearn.metrics import accuracy_score
 
 def load_data(file_name):
     return read_csv(file_name)     
@@ -171,13 +173,30 @@ def opt_regresion_parameter(X,Y,Xval,Yval):
         T = opt.minimize(fun=coste, x0=initial_thetas, args=(X,Y,i)).x
         train_errors.append(coste(T,X,Y,i))
         validation_errors.append(coste(T,Xval,Yval,i))
-    
     plt.plot(lambdas,train_errors, label='Train')
     plt.plot(lambdas,validation_errors, label='CrossVal')
     plt.suptitle('Selecting lambda using a cross validation set')
     plt.xlabel('lambda')
     plt.ylabel('Error')
     plt.legend()
+    
+    
+#SVM
+def selectCandSigma(X,Y,Xval,Yval):
+    parameters = [0.00001,0.0001,0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30]
+    bestC = 0
+    bestSigma = 0
+    bestScore = 0
+    for C in parameters:
+        svm = SVC(kernel='linear', C=C)
+        svm.fit(X, Y.ravel())
+        score = accuracy_score(Yval, svm.predict(Xval))
+        print("C=",C, " acierto de ", score)
+        if(bestScore < score):
+            bestScore = score
+            bestC = C
+                
+    return bestC, bestSigma, bestScore
     
 def main():
     #Visualizacion de los datos
@@ -228,6 +247,18 @@ def main():
     # learning_curve(Xtrain,Ytrain,Xval,Yval,20)
     # learning_curve(Xtrain,Ytrain,Xval,Yval,100)
     # learning_curve(Xtrain,Ytrain,Xval,Yval,200)
-    opt_regresion_parameter(Xtest,Ytest,Xval,Yval)
+    #opt_regresion_parameter(Xtest,Ytest,Xval,Yval)
+    
+    #SVM
+    # svm = SVC(kernel='linear', C=1)
+    # svm.fit(Xtrain, Ytrain.ravel())
+    # score = accuracy_score(Yval, svm.predict(Xval))
+    print()
+    C, sigma, score  = selectCandSigma(Xtrain, Ytrain, Xval, Yval)
+    print ("Precision con entrenamiento (75% de los casos) y validacion(25% de los casos): ", score)
+    print('C=' + str(C) + ' BestSigma =' + str(sigma))
+    
+    
+    
             
 main()
