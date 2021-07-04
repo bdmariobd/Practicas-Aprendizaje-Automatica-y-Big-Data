@@ -55,6 +55,17 @@ def print_data(X, Y, index, header):
     plt.show()
     
     
+def plot_decisionboundary(X, Y, theta, poly):
+    x1_min, x1_max = X[:, 0].min(), X[:, 0].max()
+    x2_min, x2_max = X[:, 1].min(), X[:, 1].max()
+    xx1, xx2 = np.meshgrid(np.linspace(x1_min, x1_max),
+    	np.linspace(x2_min, x2_max))
+    h = sigmoide(poly.fit_transform(np.c_[xx1.ravel(),
+    	xx2.ravel()]).dot(theta))
+    h = h.reshape(xx1.shape)
+    plt.contour(xx1, xx2, h, [0.5], linewidths=1, colors='g')
+
+    
 def print_all_grapfs(X,Y,header):
     for i in range(1,len(header.values)):
         for j in range(1,len(header.values)):
@@ -68,7 +79,41 @@ def normalize(X):
 
     return (normalized, avg, standard_deviation)
 
-                
+
+def sigmoide(Z):
+    return 1 / (1 + np.exp(-Z))
+
+
+def coste(theta, X, Y, l):
+    m = np.shape(X)[0]
+    H = sigmoide(np.matmul(X, np.transpose(theta)))
+    
+    l1 = (np.log(H))
+    l2 = (np.log(1 - H))
+
+    ret = (-1 / m) * ((np.matmul(l1, Y)) + (np.matmul(l2, (1 - Y))))
+    return ret + (l / (2 * m)) * np.sum(theta * theta)
+
+
+def gradiente(theta, X, Y, l):
+    m = np.shape(X)[0]
+    H = sigmoide(np.matmul(X, np.transpose(theta)))
+    ret = (1 / m) * np.matmul(np.transpose(X), H - Y)
+    return ret + (l / m) * theta
+
+def porcentaje_aciertos(X, Y, theta):
+    aciertos = 0
+    j = 0
+    print(X, theta)
+    for i in range(len(X)):
+        pred = sigmoide(np.dot(X[i], theta))
+        if pred >= 0.5 and Y[j] == 1:
+            aciertos += 1
+        elif pred < 0.5 and Y[j] == 0:
+            aciertos += 1
+        j += 1
+    return aciertos / len(Y) * 100
+         
 def main():
     #Visualizacion de los datos
     
@@ -84,17 +129,25 @@ def main():
     
     #Lectura de los datos
     
-    data= datos.values
+    data= datos.values.astype(float)
     header = datos.columns
     print(header.values)
     X = data[:,1:]
-    Y = data[:, 0:1]
+    Y = data[:, 1]
     
     #print_all_grapfs(X,Y,header)
     X_normalized = normalize(X)[0]
+    X_normalized = np.hstack([np.ones([np.shape(X_normalized)[0], 1]), X_normalized])
+    theta = np.zeros(X_normalized.shape[1])
+    l= 1
+    #print('Coste: ', str(coste(theta, X_normalized, Y, l)))
+    #print('Gradiente: ', np.array2string(gradiente(theta, X_normalized, Y, l)))
+    result = opt.fmin_tnc(func=coste, x0=theta, fprime=gradiente, args=(X_normalized, Y,l))
+    #print(result)
+    theta_opt = result[0]
     
-    
-    
+    print("Prediccion con un porcentaje de aciertos de:",
+        porcentaje_aciertos(X_normalized, Y, theta_opt))
     
     
     

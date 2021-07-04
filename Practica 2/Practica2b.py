@@ -88,7 +88,6 @@ def plot_decisionboundary(X, Y, theta, poly):
 def porcentaje_aciertos(X, Y, theta):
     aciertos = 0
     j = 0
-    print(X, theta)
     for i in range(len(X)):
         pred = sigmoide(np.dot(X[i], theta))
         if pred >= 0.5 and Y[j] == 1:
