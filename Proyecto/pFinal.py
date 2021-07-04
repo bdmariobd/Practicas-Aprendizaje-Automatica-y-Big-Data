@@ -86,25 +86,24 @@ def sigmoide(Z):
 
 def coste(theta, X, Y, l):
     m = np.shape(X)[0]
-    H = sigmoide(np.matmul(X, np.transpose(theta)))
+    H = sigmoide(X.dot(theta))
     
-    l1 = (np.log(H))
-    l2 = (np.log(1 - H))
+    l1 = np.transpose(np.log(H))
+    l2 = np.transpose(np.log(1 - H))
 
     ret = (-1 / m) * ((np.matmul(l1, Y)) + (np.matmul(l2, (1 - Y))))
-    return ret + (l / (2 * m)) * np.sum(theta * theta)
+    return ret + (l / (2 * m)) * np.sum(H * H)
 
 
 def gradiente(theta, X, Y, l):
     m = np.shape(X)[0]
-    H = sigmoide(np.matmul(X, np.transpose(theta)))
+    H = sigmoide(X.dot(theta))
     ret = (1 / m) * np.matmul(np.transpose(X), H - Y)
     return ret + (l / m) * theta
 
 def porcentaje_aciertos(X, Y, theta):
     aciertos = 0
     j = 0
-    print(X, theta)
     for i in range(len(X)):
         pred = sigmoide(np.dot(X[i], theta))
         if pred >= 0.5 and Y[j] == 1:
@@ -113,7 +112,22 @@ def porcentaje_aciertos(X, Y, theta):
             aciertos += 1
         j += 1
     return aciertos / len(Y) * 100
-         
+
+def test_different_values(X,Y,Theta):
+    parameters = [0.0001, 0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30,100,150,300,1000,3000]
+    plt.xlabel("Regularization term")
+    plt.ylabel("Success")
+    success=[]
+    for i in parameters:
+        result = opt.fmin_tnc(disp=0, func=coste, x0=Theta, fprime=gradiente, args=(X, Y,i))
+        #print(result)
+        theta_opt = result[0]
+        perc = porcentaje_aciertos(X, Y, theta_opt)
+        success.append(perc)
+        print("Regularizacion:", i,", prediccion con un porcentaje de aciertos de:", perc)
+    plt.scatter(parameters,success)
+    plt.plot(parameters,success)
+    
 def main():
     #Visualizacion de los datos
     
@@ -133,7 +147,7 @@ def main():
     header = datos.columns
     print(header.values)
     X = data[:,1:]
-    Y = data[:, 1]
+    Y = data[:, 0]
     
     #print_all_grapfs(X,Y,header)
     X_normalized = normalize(X)[0]
@@ -142,12 +156,13 @@ def main():
     l= 1
     #print('Coste: ', str(coste(theta, X_normalized, Y, l)))
     #print('Gradiente: ', np.array2string(gradiente(theta, X_normalized, Y, l)))
-    result = opt.fmin_tnc(func=coste, x0=theta, fprime=gradiente, args=(X_normalized, Y,l))
+    result = opt.fmin_tnc(disp=0, func=coste, x0=theta, fprime=gradiente, args=(X_normalized, Y,l))
     #print(result)
     theta_opt = result[0]
-    
     print("Prediccion con un porcentaje de aciertos de:",
         porcentaje_aciertos(X_normalized, Y, theta_opt))
+    
+    test_different_values(X_normalized, Y, theta)
     
     
     
