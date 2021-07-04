@@ -255,7 +255,7 @@ def main():
     # score = accuracy_score(Yval, svm.predict(Xval))
     print()
     C, sigma, score  = selectCandSigma(Xtrain, Ytrain, Xval, Yval)
-    print ("Precision con entrenamiento (75% de los casos) y validacion(25% de los casos): ", score)
+    print ("Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
     print('C=' + str(C) + ' BestSigma =' + str(sigma))
     
     
