@@ -31,6 +31,7 @@ import scipy.optimize as opt
 import re
 import pandas as pd
 import seaborn as sns
+import sklearn
 from sklearn import preprocessing
 from sklearn.svm import SVC 
 from sklearn.metrics import accuracy_score
@@ -243,14 +244,13 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
 
 def calcularAciertos(X, Y, T1, T2):
     aciertos = 0
-    j = 0
     tags = len(T2)
     pred = forward_propagation(X, T1, T2)[2]
     for i in range(len(X)):
-        maxi = np.argmax(pred[i])
-        if Y[i] == maxi:
+        if pred[i] >= 0.5 and Y[i] == 1:
             aciertos += 1
-        j += 1
+        elif pred[i] < 0.5 and Y[i] == 0:
+            aciertos += 1
     return aciertos / len(Y) * 100
 
 #SVM
@@ -375,28 +375,35 @@ def main():
     checkNNGradients(backprop,0)
     checkNNGradients(backprop,1)
     
+    mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
+    Xtrain = mapFeature.fit_transform(Xtrain)
     
-        
-    input_layer_size = Xtrain.shape[1]-1
+    Xtrain = np.delete(Xtrain, 0, axis=1)    
+    input_layer_size = Xtrain.shape[1]
     hidden_layer_size = 25
     num_labels = 1
     
-    Y_oneHot = np.ones((Y.shape[0], num_labels))
+    Y_oneHot = np.ones((Ytrain.shape[0], num_labels))
         
     
     theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
     
-    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l), method = 'TNC', options={'maxiter': 70}, jac=True)
+    """result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
     
     theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
     theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
-       
-    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(X,Y,theta_1,theta_2))
+    
+    np.save("t1.npy",theta_1)
+    np.save("t2.npy",theta_2)"""
+    theta_1 = np.load("t1.npy")
+    theta_2 = np.load("t2.npy")
+    
+    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(Xtrain,Ytrain,theta_1,theta_2))
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #SVM
     
-    
+    Xtrain = np.hstack([np.ones([np.shape(Xtrain)[0], 1]), Xtrain])
     # svm = SVC(kernel='linear', C=1)
     # svm.fit(Xtrain, Ytrain.ravel())
     # score = accuracy_score(Yval, svm.predict(Xval))
