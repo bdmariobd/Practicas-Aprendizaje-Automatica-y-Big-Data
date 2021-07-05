@@ -62,7 +62,7 @@ def print_data(X, Y, index, header):
     plt.ylabel(header[index[1]])
     plt.show()
     
-    
+
 def plot_decisionboundary(X, Y, theta, poly):
     x1_min, x1_max = X[:, 0].min(), X[:, 0].max()
     x2_min, x2_max = X[:, 1].min(), X[:, 1].max()
@@ -91,6 +91,73 @@ def scale(X):
     scaler = preprocessing.StandardScaler().fit(X)
     return scaler.transform(X)
 
+def polynomialGradeComparation(X, Y, l):
+    times= []
+    scores = []
+    
+    Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = chopped_dataset(X, Y)
+    
+    mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
+    X_normalized_g2 = mapFeature.fit_transform(X)
+    Xtraing2, Ytrain, Xvalg2, Yval, Xtestg2, Ytest = chopped_dataset(X_normalized_g2, Y)
+    
+    mapFeature = sklearn.preprocessing.PolynomialFeatures(3)
+    X_normalized_g3 = mapFeature.fit_transform(X)
+    Xtraing3, Ytrain, Xvalg3, Yval, Xtestg3, Ytest = chopped_dataset(X_normalized_g3, Y)
+    
+    start = time.perf_counter()
+    result = opt.fmin_tnc(disp=0, func=coste, x0=np.zeros(Xtrain.shape[1]), fprime=gradiente, args=(Xtrain, Ytrain,l))
+    theta_opt = result[0]
+    score = porcentaje_aciertos(Xval,Yval, theta_opt)
+    print("Prediccion con un porcentaje de aciertos de:", score)
+    end = time.perf_counter()
+    elapsed_time = end - start
+    times.append(elapsed_time)
+    scores.append(score)
+    
+    start = time.perf_counter()
+    result = opt.fmin_tnc(disp=0, func=coste, x0=np.zeros(Xtraing2.shape[1]), fprime=gradiente, args=(Xtraing2, Ytrain,l))
+    theta_opt = result[0]
+    score = porcentaje_aciertos(Xvalg2,Yval, theta_opt)
+    print("Prediccion con un porcentaje de aciertos de:", score)
+    end = time.perf_counter()
+    elapsed_time = end - start
+    times.append(elapsed_time)
+    scores.append(score)
+    
+    start = time.perf_counter()
+    result = opt.fmin_tnc(disp=0, func=coste, x0=np.zeros(Xtraing3.shape[1]), fprime=gradiente, args=(Xtraing3, Ytrain,l))
+    theta_opt = result[0]
+    score = porcentaje_aciertos(Xvalg3,Yval, theta_opt)
+    print("Prediccion con un porcentaje de aciertos de:", score)
+    end = time.perf_counter()
+    elapsed_time = end - start
+    times.append(elapsed_time)
+    scores.append(score)
+    
+    fig = plt.figure()
+    ax = fig.add_axes([0,0,1,1])
+    ax.bar(['G1', 'G2', 'G3'],times)
+    plt.ylabel('Elapsed time')
+    plt.show()
+    fig = plt.figure()
+    ax = fig.add_axes([0,0,1,1])
+    ax.bar(['G1', 'G2', 'G3'],scores)
+    plt.ylabel('Linear regression score')
+    plt.show()
+    
+    
+    
+    
+def chopped_dataset(X,Y):
+    Xtrain, Ytrain = X[int(len(X)*0.60):], Y[int(len(Y)*0.60):] #train theta : 60%
+    Xtemp, Ytemp = X[:int(len(X)*0.40)], Y[:int(len(Y)*0.40)]
+    
+    Xval, Yval = Xtemp[int(len(Xtemp)*0.50):], Ytemp[int(len(Ytemp)*0.50):] #validation: 20%
+    Xtest, Ytest = Xtemp[:int(len(Xtemp)*0.50)], Ytemp[:int(len(Ytemp)*0.50)] #test: 20%
+    
+    return Xtrain, Ytrain, Xval, Yval, Xtest, Ytest
+    
 def sigmoide(Z):
     return 1 / (1 + np.exp(-Z))
 
@@ -124,16 +191,16 @@ def porcentaje_aciertos(X, Y, theta):
         j += 1
     return aciertos / len(Y) * 100
 
-def test_different_values(X,Y,Theta):
+def test_different_values(X,Y, Xval, Yval):
     parameters = [0, 0.0000001, 0.00001, 0.0001, 0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30,100,150]#,200,250,300]
     plt.xlabel("Regularization term")
     plt.ylabel("Success")
     success=[]
     for i in parameters:
-        result = opt.fmin_tnc(disp=0, func=coste, x0=Theta, fprime=gradiente, args=(X, Y,i))
+        result = opt.fmin_tnc(disp=0, func=coste, x0=np.zeros(X.shape[1]), fprime=gradiente, args=(X, Y,i))
         #print(result)
         theta_opt = result[0]
-        perc = porcentaje_aciertos(X, Y, theta_opt)
+        perc = porcentaje_aciertos(Xval, Yval, theta_opt)
         success.append(perc)
         print("Regularizacion:", i,", prediccion con un porcentaje de aciertos de:", perc)
     plt.scatter(parameters,success)
@@ -144,7 +211,7 @@ def get_errors(X, Y, Xval, Yval, l):
     train_errors = []
     validation_errors = []
     m = X.shape[0]
-    for i in range(1, m, 1000):
+    for i in range(1, 100):
         T = np.zeros(X.shape[1])
         thetas = opt.minimize(fun=coste, x0=T, args=(X[0:i], Y[0:i], l)).x
         #thetas= opt.fmin_tnc(disp=0, func=coste, x0=T, fprime=gradiente, args=(X[0:i], Y[0:i],l))[0]
@@ -183,6 +250,7 @@ def opt_regresion_parameter(X,Y,Xval,Yval):
     plt.xlabel('lambda')
     plt.ylabel('Error')
     plt.legend()
+    plt.show()
     
 #Neuronal network
 
@@ -329,7 +397,7 @@ def main():
     datos.hist(figsize=(10,10))
     plt.tight_layout()
     plt.show()
-    #sns.pairplot(datos, corner=True, hue = 'blue_win')
+    
     
     #Lectura de los datos
     
@@ -338,35 +406,37 @@ def main():
     print(header.values)
     X = data[:,1:]
     Y = data[:, 0]
-        
+    
+    #sns.pairplot(datos, corner=True, hue = 'blue_win')    
     #print_all_grapfs(X,Y,header)
     X_normalized = scale(X)
+    
     X_normalized = np.hstack([np.ones([np.shape(X_normalized)[0], 1]), X_normalized])
+    Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = chopped_dataset(X_normalized, Y)
     
     
-    Xtrain, Ytrain = X_normalized[int(len(X_normalized)*0.60):], Y[int(len(Y)*0.60):] #train theta : 60%
-    Xtemp, Ytemp = X_normalized[:int(len(X_normalized)*0.40)], Y[:int(len(Y)*0.40)]
-    
-    Xval, Yval = Xtemp[int(len(Xtemp)*0.50):], Ytemp[int(len(Ytemp)*0.50):] #validation: 20%
-    Xtest, Ytest = Xtemp[:int(len(Xtemp)*0.50)], Ytemp[:int(len(Ytemp)*0.50)] #test: 20%
-    
-    theta = np.zeros(Xtrain.shape[1])
+    polynomialGradeComparation(X_normalized, Y, 1)
     l= 1
-    #print('Coste: ', str(coste(theta, Xtrain, Ytrain, l)))
-    #print('Gradiente: ', np.array2string(gradiente(theta, Xtrain, Ytrain, l)))
-    result = opt.fmin_tnc(disp=0, func=coste, x0=theta, fprime=gradiente, args=(Xtrain, Ytrain,l))
-    #print(result)
-    theta_opt = result[0]
-    print("Prediccion con un porcentaje de aciertos de:",
-        porcentaje_aciertos(Xtrain,Ytrain, theta_opt))
     
-    #test_different_values(Xtrain, Ytrain, theta)
-    # learning_curve(Xtrain,Ytrain,Xval,Yval,0)
-    # learning_curve(Xtrain,Ytrain,Xval,Yval,1)
-    # learning_curve(Xtrain,Ytrain,Xval,Yval,20)
-    # learning_curve(Xtrain,Ytrain,Xval,Yval,100)
-    # learning_curve(Xtrain,Ytrain,Xval,Yval,200)
-    #opt_regresion_parameter(Xtest,Ytest,Xval,Yval)
+    mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
+    X_normalized_g2 = mapFeature.fit_transform(X_normalized)
+    Xtraing2, Ytrain, Xvalg2, Yval, Xtestg2, Ytest = chopped_dataset(X_normalized_g2, Y)
+    
+    test_different_values(Xtrain, Ytrain, Xval, Yval)
+    test_different_values(Xtraing2, Ytrain, Xvalg2, Yval)
+    #test_different_values(Xtraing3, Ytrain, Xvalg3, Yval)
+    
+    learning_curve(Xtrain,Ytrain,Xval,Yval,0)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,1)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,20)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,100)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,200)
+    opt_regresion_parameter(Xtest,Ytest,Xval,Yval)
+    
+    learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0)
+    learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,1)
+    learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,20)
+    opt_regresion_parameter(Xtraing2,Ytest,Xvalg2,Yval)
     
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -375,16 +445,13 @@ def main():
     checkNNGradients(backprop,0)
     checkNNGradients(backprop,1)
     
-    mapFeature = sklearn.preprocessing.PolynomialFeatures(2)
-    Xtrain = mapFeature.fit_transform(Xtrain)
+    
     
     Xtrain = np.delete(Xtrain, 0, axis=1)    
     input_layer_size = Xtrain.shape[1]
     hidden_layer_size = 25
     num_labels = 1
-    
-    Y_oneHot = np.ones((Ytrain.shape[0], num_labels))
-        
+          
     
     theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
