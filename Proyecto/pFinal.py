@@ -35,7 +35,8 @@ from sklearn import preprocessing
 from sklearn.svm import SVC 
 from sklearn.metrics import accuracy_score
 import time
-
+import checkNNGradients
+from checkNNGradients import *
 def load_data(file_name):
     return read_csv(file_name)     
  
@@ -136,6 +137,7 @@ def test_different_values(X,Y,Theta):
         print("Regularizacion:", i,", prediccion con un porcentaje de aciertos de:", perc)
     plt.scatter(parameters,success)
     plt.plot(parameters,success)
+    plt.show()
     
 def get_errors(X, Y, Xval, Yval, l):
     train_errors = []
@@ -183,6 +185,73 @@ def opt_regresion_parameter(X,Y,Xval,Yval):
     
 #Neuronal network
 
+def forward_propagation(X, T1, T2):
+    m = X.shape[0]
+
+    A1 = np.hstack([np.ones([m, 1]), X])
+    Z2 = np.dot(A1, T1.T)
+    A2 = np.hstack([np.ones([m, 1]), sigmoide(Z2)])
+    Z3 = np.dot(A2, T2.T)
+    H = sigmoide(Z3)
+
+    return A1, A2, H
+
+def cost(X, Y, l, T_1, T_2):
+    A1, A2, H = forward_propagation(X, T_1, T_2)
+    m = X.shape[0]
+    l1 = np.transpose(np.log(H))
+    l2 = np.transpose(np.log(1 - H))
+    ret = ((l1.T * -Y) - ((1 - Y) * l2.T))
+    ret = np.sum(ret) / m
+    ret += (l / (2 * m)) * (np.sum(np.square(T_1[:, 1:])) + np.sum(np.square(T_2[:, 1:])))
+    return ret
+
+def gradient(X, Y, l, theta_1, theta_2):
+    m = X.shape[0]
+    A1, A2, H = forward_propagation(X, theta_1, theta_2)
+    D1, D2 = np.zeros(theta_1.shape), np.zeros(theta_2.shape)
+
+    for t in range(m):
+        a1t = A1[t, :]
+        a2t = A2[t, :]
+        ht = H[t, :]
+        yt = Y[t]
+
+        d3t = ht - yt
+        d2t = np.dot(theta_2.T, d3t) * (a2t * (1 - a2t))
+
+        D1 = D1 + np.dot(d2t[1:, np.newaxis], a1t[np.newaxis, :])
+        D2 = D2 + np.dot(d3t[:, np.newaxis], a2t[np.newaxis, :])
+
+    D1 *= 1 / m
+    D2 *= 1 / m
+    # Regularizacion de todos menos j=0
+    D1[:, 1:] += (l / m * theta_1[:, 1:])
+    D2[:, 1:] += (l / m * theta_2[:, 1:])
+    grad = np.concatenate((np.ravel(D1), np.ravel(D2)))
+
+    return grad
+
+
+def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
+    theta_1 = np.reshape(params_rn[:num_ocultas * (num_entradas + 1)],
+                         (num_ocultas, (num_entradas + 1)))
+    theta_2 = np.reshape(params_rn[num_ocultas * (num_entradas + 1):],
+                         (num_etiquetas, (num_ocultas + 1)))
+
+    return (cost(X, Y, reg, theta_1, theta_2), gradient(X, Y, reg, theta_1, theta_2))
+
+def calcularAciertos(X, Y, T1, T2):
+    aciertos = 0
+    j = 0
+    tags = len(T2)
+    pred = forward_propagation(X, T1, T2)[2]
+    for i in range(len(X)):
+        maxi = np.argmax(pred[i])
+        if Y[i] == maxi:
+            aciertos += 1
+        j += 1
+    return aciertos / len(Y) * 100
 
 #SVM
 def selectCandSigmaLinearK(X,Y,Xval,Yval):
@@ -303,7 +372,27 @@ def main():
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #Neuronal network
     
+    checkNNGradients(backprop,0)
+    checkNNGradients(backprop,1)
     
+    
+        
+    input_layer_size = Xtrain.shape[1]-1
+    hidden_layer_size = 25
+    num_labels = 1
+    
+    Y_oneHot = np.ones((Y.shape[0], num_labels))
+        
+    
+    theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
+    params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    
+    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, X, Y_oneHot, l), method = 'TNC', options={'maxiter': 70}, jac=True)
+    
+    theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
+    theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
+       
+    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(X,Y,theta_1,theta_2))
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #SVM
     
@@ -311,8 +400,7 @@ def main():
     # svm = SVC(kernel='linear', C=1)
     # svm.fit(Xtrain, Ytrain.ravel())
     # score = accuracy_score(Yval, svm.predict(Xval))
-    print()
-    C, sigma, score  = selectCandSigmaLinearK(Xtrain, Ytrain, Xval, Yval)
+    """C, sigma, score  = selectCandSigmaLinearK(Xtrain, Ytrain, Xval, Yval)
     print ("Lineal kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
     print('C=' + str(C)) #+ ' BestSigma =' + str(sigma))
     
@@ -320,7 +408,7 @@ def main():
     print ("Gauss kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
     print('C=' + str(C) + ' BestSigma =' + str(sigma))
     
-    linearKVSgaussianK(Xtrain, Ytrain, Xval, Yval,C)
+    linearKVSgaussianK(Xtrain, Ytrain, Xval, Yval,C)"""
     
     
     
