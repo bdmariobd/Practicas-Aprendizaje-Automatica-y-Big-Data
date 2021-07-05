@@ -34,6 +34,7 @@ import seaborn as sns
 from sklearn import preprocessing
 from sklearn.svm import SVC 
 from sklearn.metrics import accuracy_score
+import time
 
 def load_data(file_name):
     return read_csv(file_name)     
@@ -180,10 +181,12 @@ def opt_regresion_parameter(X,Y,Xval,Yval):
     plt.ylabel('Error')
     plt.legend()
     
-    
+#Neuronal network
+
+
 #SVM
-def selectCandSigma(X,Y,Xval,Yval):
-    parameters = [0.00001,0.0001,0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30]
+def selectCandSigmaLinearK(X,Y,Xval,Yval):
+    parameters = [0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]#, 3, 10, 30]
     bestC = 0
     bestSigma = 0
     bestScore = 0
@@ -197,6 +200,53 @@ def selectCandSigma(X,Y,Xval,Yval):
             bestC = C
                 
     return bestC, bestSigma, bestScore
+
+def selectCandSigmaGaussK(X,Y,Xval,Yval):
+    parameters = [0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]#, 3, 10, 30]
+    bestC = 0
+    bestSigma = 0
+    bestScore = 0
+    for C in parameters:
+        for sigma in parameters:
+            svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * sigma **2))
+            svm.fit(X, Y.ravel())
+            score = accuracy_score(Yval, svm.predict(Xval))
+            print("Sigma=" ,sigma," C=",C, " acierto de ", score)
+            if(bestScore < score):
+                bestScore = score
+                bestC = C
+                
+    return bestC, bestSigma, bestScore
+    
+def linearKVSgaussianK(X,Y,Xval,Yval,C):
+    plt.legend()
+    plt.suptitle('Linear Kernel vs Gaussian Kernel (C =' +str(C) + ')')
+    times= []
+    start = time.perf_counter()
+    svm = SVC(kernel='linear', C=C)
+    svm.fit(X, Y.ravel())
+    end = time.perf_counter()
+    elapsed_time = end - start
+    
+    score = accuracy_score(Yval, svm.predict(Xval))
+    print(elapsed_time, score)
+    times.append(elapsed_time)
+    
+    start = time.perf_counter()
+    svm = SVC(kernel='rbf', C=C, gamma=1 / ( 2 * C **2))
+    svm.fit(X, Y.ravel())
+    score = accuracy_score(Yval, svm.predict(Xval))
+    end = time.perf_counter()
+    elapsed_time = end - start
+    
+    print(elapsed_time, score)
+    times.append(elapsed_time)
+    
+    fig = plt.figure()
+    ax = fig.add_axes([0,0,1,1])
+    ax.bar(['Linear', 'Gaussian'],times)
+    plt.show()
+    
     
 def main():
     #Visualizacion de los datos
@@ -249,14 +299,29 @@ def main():
     # learning_curve(Xtrain,Ytrain,Xval,Yval,200)
     #opt_regresion_parameter(Xtest,Ytest,Xval,Yval)
     
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    #Neuronal network
+    
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #SVM
+    
+    
     # svm = SVC(kernel='linear', C=1)
     # svm.fit(Xtrain, Ytrain.ravel())
     # score = accuracy_score(Yval, svm.predict(Xval))
     print()
-    C, sigma, score  = selectCandSigma(Xtrain, Ytrain, Xval, Yval)
-    print ("Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
+    C, sigma, score  = selectCandSigmaLinearK(Xtrain, Ytrain, Xval, Yval)
+    print ("Lineal kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
+    print('C=' + str(C)) #+ ' BestSigma =' + str(sigma))
+    
+    C, sigma, score  = selectCandSigmaGaussK(Xtrain, Ytrain, Xval, Yval)
+    print ("Gauss kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
     print('C=' + str(C) + ' BestSigma =' + str(sigma))
+    
+    linearKVSgaussianK(Xtrain, Ytrain, Xval, Yval,C)
+    
     
     
     
