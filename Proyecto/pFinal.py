@@ -38,6 +38,7 @@ from sklearn.metrics import accuracy_score
 import time
 import checkNNGradients
 from checkNNGradients import *
+
 def load_data(file_name):
     return read_csv(file_name)     
  
@@ -45,6 +46,7 @@ def load_data(file_name):
 def data_visualization(X,Y):
     X.hist(figsize=(10,10))
     plt.tight_layout()
+    
     
     
 def print_data(X, Y, index, header):
@@ -372,19 +374,24 @@ def calcularAciertos(X, Y, T1, T2):
 
 #SVM
 def selectCandSigmaLinearK(X,Y,Xval,Yval):
-    parameters = [0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]#, 3, 10, 30]
+    parameters = [0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30, 50, 70]
     bestC = 0
     bestSigma = 0
     bestScore = 0
+    scores = []
     for C in parameters:
         svm = SVC(kernel='linear', C=C)
         svm.fit(X, Y.ravel())
         score = accuracy_score(Yval, svm.predict(Xval))
+        scores.append(score)
         print("C=",C, " acierto de ", score)
         if(bestScore < score):
             bestScore = score
             bestC = C
-                
+    plt.plot(parameters,scores)
+    plt.xlabel('C')
+    plt.ylabel('Score')
+    plt.show()
     return bestC, bestSigma, bestScore
 
 def selectCandSigmaGaussK(X,Y,Xval,Yval):
@@ -405,7 +412,7 @@ def selectCandSigmaGaussK(X,Y,Xval,Yval):
     return bestC, bestSigma, bestScore
     
 def linearKVSgaussianK(X,Y,Xval,Yval,C):
-    plt.legend()
+    #plt.legend()
     plt.suptitle('Linear Kernel vs Gaussian Kernel (C =' +str(C) + ')')
     times= []
     start = time.perf_counter()
@@ -447,6 +454,18 @@ def main():
     plt.tight_layout()
     plt.show()
     
+    corr = datos.corr()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(corr,cmap='coolwarm', vmin=-1, vmax=1)
+    fig.colorbar(cax)
+    ticks = np.arange(0,len(datos.columns),1)
+    ax.set_xticks(ticks)
+    plt.xticks(rotation=90)
+    ax.set_yticks(ticks)
+    ax.set_xticklabels(datos.columns)
+    ax.set_yticklabels(datos.columns)
+    plt.show()
     
     #Lectura de los datos
     
@@ -496,7 +515,7 @@ def main():
     # checkNNGradients(backprop,0)
     # checkNNGradients(backprop,1)
     
-    
+    """
     l=0
     #Xtrain = np.delete(Xtrain, 0, axis=1)    
     input_layer_size = Xtrain.shape[1]
@@ -523,23 +542,31 @@ def main():
     iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtraing2, Y_oneHot,Xvalg2,Yval, l)
     lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtraing2, Y_oneHot,Xvalg2,Yval, 50)
     
-    
+    """
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #SVM
     
-    Xtrain = np.hstack([np.ones([np.shape(Xtrain)[0], 1]), Xtrain])
-    # svm = SVC(kernel='linear', C=1)
-    # svm.fit(Xtrain, Ytrain.ravel())
-    # score = accuracy_score(Yval, svm.predict(Xval))
-    """C, sigma, score  = selectCandSigmaLinearK(Xtrain, Ytrain, Xval, Yval)
+    #Xtrain = np.hstack([np.ones([np.shape(Xtrain)[0], 1]), Xtrain])
+    """svm = SVC(kernel='linear', C=1)
+    svm.fit(Xtrain, Ytrain.ravel())
+    score = accuracy_score(Yval, svm.predict(Xval))"""
+    
+    C, sigma, score  = selectCandSigmaLinearK(Xtrain, Ytrain, Xval, Yval)
+    
     print ("Lineal kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
     print('C=' + str(C)) #+ ' BestSigma =' + str(sigma))
     
-    C, sigma, score  = selectCandSigmaGaussK(Xtrain, Ytrain, Xval, Yval)
-    print ("Gauss kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
-    print('C=' + str(C) + ' BestSigma =' + str(sigma))
+    C, sigma, score  = selectCandSigmaLinearK(Xtraing2, Ytrain, Xvalg2, Yval)
     
-    linearKVSgaussianK(Xtrain, Ytrain, Xval, Yval,C)"""
+    print ("Lineal kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
+    print('C=' + str(C)) #+ ' BestSigma =' + str(sigma))
+    
+    
+    """C, sigma, score  = selectCandSigmaGaussK(Xtrain, Ytrain, Xval, Yval)
+    print ("Gauss kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
+    print('C=' + str(C) + ' BestSigma =' + str(sigma))"""
+    
+    linearKVSgaussianK(Xtrain, Ytrain, Xval, Yval,C)
     
     
     
