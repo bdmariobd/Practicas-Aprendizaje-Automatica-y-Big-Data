@@ -88,7 +88,8 @@ def normalize(X):
     return (normalized, avg, standard_deviation)
 
 def scale(X):
-    scaler = preprocessing.StandardScaler().fit(X)
+    scaler = preprocessing.MinMaxScaler().fit(X)
+    #scaler = preprocessing.StandardScaler().fit(X) 
     return scaler.transform(X)
 
 def polynomialGradeComparation(X, Y, l):
@@ -211,7 +212,7 @@ def get_errors(X, Y, Xval, Yval, l):
     train_errors = []
     validation_errors = []
     m = X.shape[0]
-    for i in range(1, 100,10):
+    for i in range(1, 100):
         T = np.zeros(X.shape[1])
         thetas = opt.minimize(fun=coste, x0=T, args=(X[0:i], Y[0:i], l)).x
         #thetas= opt.fmin_tnc(disp=0, func=coste, x0=T, fprime=gradiente, args=(X[0:i], Y[0:i],l))[0]
@@ -310,6 +311,47 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
 
     return (cost(X, Y, reg, theta_1, theta_2), gradient(X, Y, reg, theta_1, theta_2))
 
+def iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l):
+    scores = []
+    iterations = np.linspace(10,200,20)
+    for i in iterations:
+        result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l),method = 'TNC', options={'maxiter': int(i)} , jac=True)
+        
+        theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
+        theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
+        
+        """np.save("t1.npy",theta_1)
+        np.save("t2.npy",theta_2)
+        theta_1 = np.load("t1.npy")
+        theta_2 = np.load("t2.npy")"""
+        score = calcularAciertos(Xtrain,Ytrain,theta_1,theta_2)
+        scores.append(score)
+        print("El porcentaje de acierto del modelo con redes neuronales es: ", score)
+    plt.xlabel('Max iterations')
+    plt.ylabel('Score')
+    plt.plot(iterations, scores)
+    plt.show()
+    
+def lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, iterations):
+    scores = []
+    l = np.linspace(0,10,50)
+    for i in l:
+        result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, i),method = 'TNC', options={'maxiter': iterations} , jac=True)
+        
+        theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
+        theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
+        
+        """np.save("t1.npy",theta_1)
+        np.save("t2.npy",theta_2)
+        theta_1 = np.load("t1.npy")
+        theta_2 = np.load("t2.npy")"""
+        score = calcularAciertos(Xtrain,Ytrain,theta_1,theta_2)
+        scores.append(score)
+        print("El porcentaje de acierto del modelo con redes neuronales es: ", score)
+    plt.xlabel('Lambda')
+    plt.ylabel('Score')
+    plt.plot(l, scores)
+    plt.show()
 def calcularAciertos(X, Y, T1, T2):
     aciertos = 0
     tags = len(T2)
@@ -411,7 +453,7 @@ def main():
     #print_all_grapfs(X,Y,header)
     X_normalized = scale(X)
     
-    X_normalized, Y = X_normalized[:int(len(X_normalized)*0.005)], Y[:int(len(Y)*0.005)]
+    #X_normalized, Y = X_normalized[:int(len(X_normalized)*0.005)], Y[:int(len(Y)*0.005)]
     #X_normalized = np.hstack([np.ones([np.shape(X_normalized)[0], 1]), X_normalized])
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = chopped_dataset(X_normalized, Y)
     
@@ -428,24 +470,24 @@ def main():
     Xtraing3, Ytrain, Xvalg3, Yval, Xtestg3, Ytest = chopped_dataset(X_normalized_g3, Y)
     
     
-    test_different_values(Xtrain, Ytrain, Xval, Yval)
-    test_different_values(Xtraing2, Ytrain, Xvalg2, Yval)
+    #test_different_values(Xtrain, Ytrain, Xval, Yval)
+    #test_different_values(Xtraing2, Ytrain, Xvalg2, Yval)
     #test_different_values(Xtraing3, Ytrain, Xvalg3, Yval)
     
     """learning_curve(Xtrain,Ytrain,Xval,Yval,0)
     learning_curve(Xtrain,Ytrain,Xval,Yval,0.01)
     learning_curve(Xtrain,Ytrain,Xval,Yval,0.1)
     learning_curve(Xtrain,Ytrain,Xval,Yval,1)
-    learning_curve(Xtrain,Ytrain,Xval,Yval,20)
-    opt_regresion_parameter(Xtrain,Ytrain,Xval,Yval)
     
-    learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0)
+    #learning_curve(Xtrain,Ytrain,Xval,Yval,20)
+    opt_regresion_parameter(Xtrain,Ytrain,Xval,Yval)"""
+    
+    """learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0.01)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0.1)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,1)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,20)
-    opt_regresion_parameter(Xtraing2,Ytrain,Xvalg2,Yval)
-    """
+    opt_regresion_parameter(Xtraing2,Ytrain,Xvalg2,Yval)"""
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #Neuronal network
@@ -460,23 +502,12 @@ def main():
     hidden_layer_size = 100
     num_labels = 1
           
-    
     theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
     
-    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
     
-    theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
-    theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
-    
-    np.save("t1.npy",theta_1)
-    np.save("t2.npy",theta_2)
-    """
-    theta_1 = np.load("t1.npy")
-    theta_2 = np.load("t2.npy")"""
-    
-    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(Xtrain,Ytrain,theta_1,theta_2))
-    
+    iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l)
+    lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, 70)
     
     input_layer_size = Xtraing2.shape[1]
     hidden_layer_size = 100
