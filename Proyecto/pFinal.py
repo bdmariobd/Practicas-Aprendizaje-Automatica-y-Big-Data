@@ -255,6 +255,10 @@ def opt_regresion_parameter(X,Y,Xval,Yval):
     
 #Neuronal network
 
+def random_weights(Lin, Lout):
+    epsilon = (6**1/2) / (Lin+Lout)**1/2
+    return np.random.uniform(-epsilon, epsilon, (Lin,Lout))
+
 def forward_propagation(X, T1, T2):
     m = X.shape[0]
 
@@ -269,8 +273,8 @@ def forward_propagation(X, T1, T2):
 def cost(X, Y, l, T_1, T_2):
     A1, A2, H = forward_propagation(X, T_1, T_2)
     m = X.shape[0]
-    l1 = np.transpose(np.log(H))
-    l2 = np.transpose(np.log(1 - H))
+    l1 = np.transpose(np.log(H+ 1e-06))
+    l2 = np.transpose(np.log(1 - H + 1e-06))
     ret = ((l1.T * -Y) - ((1 - Y) * l2.T))
     ret = np.sum(ret) / m
     ret += (l / (2 * m)) * (np.sum(np.square(T_1[:, 1:])) + np.sum(np.square(T_2[:, 1:])))
@@ -311,9 +315,9 @@ def backprop(params_rn, num_entradas, num_ocultas, num_etiquetas, X, Y, reg):
 
     return (cost(X, Y, reg, theta_1, theta_2), gradient(X, Y, reg, theta_1, theta_2))
 
-def iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l):
+def iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain,Xval,Yval,l):
     scores = []
-    iterations = np.linspace(10,200,20)
+    iterations = np.linspace(10,100,10)
     for i in iterations:
         result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l),method = 'TNC', options={'maxiter': int(i)} , jac=True)
         
@@ -324,7 +328,7 @@ def iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, 
         np.save("t2.npy",theta_2)
         theta_1 = np.load("t1.npy")
         theta_2 = np.load("t2.npy")"""
-        score = calcularAciertos(Xtrain,Ytrain,theta_1,theta_2)
+        score = calcularAciertos(Xval,Yval,theta_1,theta_2)
         scores.append(score)
         print("El porcentaje de acierto del modelo con redes neuronales es: ", score)
     plt.xlabel('Max iterations')
@@ -332,9 +336,9 @@ def iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, 
     plt.plot(iterations, scores)
     plt.show()
     
-def lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, iterations):
+def lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain,Xval,Yval, iterations):
     scores = []
-    l = np.linspace(0,10,50)
+    l = [0.001, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
     for i in l:
         result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, i),method = 'TNC', options={'maxiter': iterations} , jac=True)
         
@@ -345,23 +349,26 @@ def lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtra
         np.save("t2.npy",theta_2)
         theta_1 = np.load("t1.npy")
         theta_2 = np.load("t2.npy")"""
-        score = calcularAciertos(Xtrain,Ytrain,theta_1,theta_2)
+        score = calcularAciertos(Xval,Yval,theta_1,theta_2)
         scores.append(score)
         print("El porcentaje de acierto del modelo con redes neuronales es: ", score)
     plt.xlabel('Lambda')
     plt.ylabel('Score')
     plt.plot(l, scores)
     plt.show()
+    
 def calcularAciertos(X, Y, T1, T2):
     aciertos = 0
+    j = 0
     tags = len(T2)
     pred = forward_propagation(X, T1, T2)[2]
     for i in range(len(X)):
-        if pred[i] >= 0.5 and Y[i] == 1:
+        maxi = np.argmax(pred[i])
+        if Y[i] == maxi:
             aciertos += 1
-        elif pred[i] < 0.5 and Y[i] == 0:
-            aciertos += 1
+        j += 1
     return aciertos / len(Y) * 100
+
 
 #SVM
 def selectCandSigmaLinearK(X,Y,Xval,Yval):
@@ -453,8 +460,6 @@ def main():
     #print_all_grapfs(X,Y,header)
     X_normalized = scale(X)
     
-    #X_normalized, Y = X_normalized[:int(len(X_normalized)*0.005)], Y[:int(len(Y)*0.005)]
-    #X_normalized = np.hstack([np.ones([np.shape(X_normalized)[0], 1]), X_normalized])
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = chopped_dataset(X_normalized, Y)
     
     
@@ -469,10 +474,6 @@ def main():
     X_normalized_g3 = mapFeature.fit_transform(X_normalized)
     Xtraing3, Ytrain, Xvalg3, Yval, Xtestg3, Ytest = chopped_dataset(X_normalized_g3, Y)
     
-    
-    #test_different_values(Xtrain, Ytrain, Xval, Yval)
-    #test_different_values(Xtraing2, Ytrain, Xvalg2, Yval)
-    #test_different_values(Xtraing3, Ytrain, Xvalg3, Yval)
     
     """learning_curve(Xtrain,Ytrain,Xval,Yval,0)
     learning_curve(Xtrain,Ytrain,Xval,Yval,0.01)
@@ -499,57 +500,30 @@ def main():
     l=0
     #Xtrain = np.delete(Xtrain, 0, axis=1)    
     input_layer_size = Xtrain.shape[1]
-    hidden_layer_size = 100
-    num_labels = 1
+    hidden_layer_size = 25
+    num_labels = 2
+    
           
-    theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
+    theta_1, theta_2 = random_weights(hidden_layer_size,input_layer_size +1), random_weights(num_labels,hidden_layer_size + 1)
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
     
-    
-    iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l)
-    lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, 70)
+    Y_oneHot = np.zeros((len(Ytrain), num_labels))
+    for i in range(len(Ytrain)):
+        if Ytrain[i]:
+            Y_oneHot[i][1]=1
+        else:
+            Y_oneHot[i][0]=1
+        
+    iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Y_oneHot,Xval,Yval, l)
+    lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtrain, Y_oneHot,Xval,Yval, 50)
     
     input_layer_size = Xtraing2.shape[1]
-    hidden_layer_size = 100
-    num_labels = 1
-          
-    
-    theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
+    theta_1, theta_2 = random_weights(hidden_layer_size,input_layer_size +1), random_weights(num_labels,hidden_layer_size + 1)
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtraing2, Y_oneHot,Xvalg2,Yval, l)
+    lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtraing2, Y_oneHot,Xvalg2,Yval, 50)
     
-    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtraing2, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
     
-    theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
-    theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
-    
-    np.save("t1.npy",theta_1)
-    np.save("t2.npy",theta_2)
-    """
-    theta_1 = np.load("t1.npy")
-    theta_2 = np.load("t2.npy")"""
-    
-    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(Xtraing2,Ytrain,theta_1,theta_2))
-    
-    input_layer_size = Xtraing3.shape[1]
-    hidden_layer_size = 100
-    num_labels = 1
-          
-    
-    theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
-    params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
-    
-    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtraing3, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
-    
-    theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
-    theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
-    
-    np.save("t1.npy",theta_1)
-    np.save("t2.npy",theta_2)
-    """
-    theta_1 = np.load("t1.npy")
-    theta_2 = np.load("t2.npy")"""
-    
-    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(Xtraing3,Ytrain,theta_1,theta_2))
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #SVM
     
