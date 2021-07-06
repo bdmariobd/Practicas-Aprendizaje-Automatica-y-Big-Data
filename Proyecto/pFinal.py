@@ -91,7 +91,7 @@ def normalize(X):
 
 def scale(X):
     scaler = preprocessing.MinMaxScaler().fit(X)
-    #scaler = preprocessing.StandardScaler().fit(X) 
+    #scaler = preprocessing.StandardScaler().fit(X) #de los errores se aprende :D
     return scaler.transform(X)
 
 def polynomialGradeComparation(X, Y, l):
@@ -164,7 +164,6 @@ def chopped_dataset(X,Y):
 def sigmoide(Z):
     return 1 / (1 + np.exp(-Z))
 
-
 def coste(theta, X, Y, l):
     m = np.shape(X)[0]
     H = sigmoide(X.dot(theta))
@@ -174,7 +173,6 @@ def coste(theta, X, Y, l):
 
     ret = (-1 / m) * ((np.matmul(l1, Y)) + (np.matmul(l2, (1 - Y))))
     return ret + (l / (2 * m)) * np.sum(H * H)
-
 
 def gradiente(theta, X, Y, l):
     m = np.shape(X)[0]
@@ -228,7 +226,7 @@ def learning_curve(X,Y,Xval,Yval,l):
     train_errors, value_errors = get_errors(X, Y, Xval, Yval, l)
     x = np.linspace(1, len(train_errors), len(train_errors))
     plt.plot(x, train_errors, label='Train')
-    x = np.linspace(1, len(train_errors), len(train_errors))
+    x = np.linspace(1, len(value_errors), len(value_errors))
     plt.plot(x, value_errors, label='CrossVal')
     plt.legend()
     plt.suptitle('Learning curve for linear regression (lambda =' +str(l) + ')')
@@ -476,7 +474,7 @@ def main():
     Y = data[:, 0]
     
     #sns.pairplot(datos, corner=True, hue = 'blue_win')    
-    #print_all_grapfs(X,Y,header)
+    #print_all_grapfs(X,Y,header) tarda demasiado, mejor la opción de arriba
     X_normalized = scale(X)
     
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = chopped_dataset(X_normalized, Y)
@@ -494,28 +492,28 @@ def main():
     Xtraing3, Ytrain, Xvalg3, Yval, Xtestg3, Ytest = chopped_dataset(X_normalized_g3, Y)
     
     
-    """learning_curve(Xtrain,Ytrain,Xval,Yval,0)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,0)
     learning_curve(Xtrain,Ytrain,Xval,Yval,0.01)
     learning_curve(Xtrain,Ytrain,Xval,Yval,0.1)
     learning_curve(Xtrain,Ytrain,Xval,Yval,1)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,20)
+    opt_regresion_parameter(Xtrain,Ytrain,Xval,Yval)
     
-    #learning_curve(Xtrain,Ytrain,Xval,Yval,20)
-    opt_regresion_parameter(Xtrain,Ytrain,Xval,Yval)"""
-    
-    """learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0)
+    learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0.01)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0.1)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,1)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,20)
-    opt_regresion_parameter(Xtraing2,Ytrain,Xvalg2,Yval)"""
+    opt_regresion_parameter(Xtraing2,Ytrain,Xvalg2,Yval)
+    
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #Neuronal network
     
-    # checkNNGradients(backprop,0)
-    # checkNNGradients(backprop,1)
+    checkNNGradients(backprop,0)
+    checkNNGradients(backprop,1)
     
-    """
+    
     l=0
     #Xtrain = np.delete(Xtrain, 0, axis=1)    
     input_layer_size = Xtrain.shape[1]
@@ -542,14 +540,9 @@ def main():
     iterationsScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtraing2, Y_oneHot,Xvalg2,Yval, l)
     lambdaScore(params_rn, input_layer_size, hidden_layer_size, num_labels, Xtraing2, Y_oneHot,Xvalg2,Yval, 50)
     
-    """
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #SVM
-    
-    #Xtrain = np.hstack([np.ones([np.shape(Xtrain)[0], 1]), Xtrain])
-    """svm = SVC(kernel='linear', C=1)
-    svm.fit(Xtrain, Ytrain.ravel())
-    score = accuracy_score(Yval, svm.predict(Xval))"""
+        
     
     C, sigma, score  = selectCandSigmaLinearK(Xtrain, Ytrain, Xval, Yval)
     
@@ -562,12 +555,11 @@ def main():
     print('C=' + str(C)) #+ ' BestSigma =' + str(sigma))
     
     
-    """C, sigma, score  = selectCandSigmaGaussK(Xtrain, Ytrain, Xval, Yval)
+    C, sigma, score  = selectCandSigmaGaussK(Xtrain, Ytrain, Xval, Yval)
     print ("Gauss kernel: Precision con entrenamiento (60% de los casos) y validacion(20% de los casos): ", score)
-    print('C=' + str(C) + ' BestSigma =' + str(sigma))"""
+    print('C=' + str(C) + ' BestSigma =' + str(sigma))
     
     linearKVSgaussianK(Xtrain, Ytrain, Xval, Yval,C)
-    
     
     
     
