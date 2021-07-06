@@ -211,7 +211,7 @@ def get_errors(X, Y, Xval, Yval, l):
     train_errors = []
     validation_errors = []
     m = X.shape[0]
-    for i in range(1, 100):
+    for i in range(1, 100,10):
         T = np.zeros(X.shape[1])
         thetas = opt.minimize(fun=coste, x0=T, args=(X[0:i], Y[0:i], l)).x
         #thetas= opt.fmin_tnc(disp=0, func=coste, x0=T, fprime=gradiente, args=(X[0:i], Y[0:i],l))[0]
@@ -235,7 +235,7 @@ def learning_curve(X,Y,Xval,Yval,l):
     
     
 def opt_regresion_parameter(X,Y,Xval,Yval):
-    lambdas =[0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10,20,100,200]
+    lambdas =[0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]#,20,100,200]
     train_errors = []
     validation_errors = []
 
@@ -411,7 +411,8 @@ def main():
     #print_all_grapfs(X,Y,header)
     X_normalized = scale(X)
     
-    X_normalized = np.hstack([np.ones([np.shape(X_normalized)[0], 1]), X_normalized])
+    X_normalized, Y = X_normalized[:int(len(X_normalized)*0.005)], Y[:int(len(Y)*0.005)]
+    #X_normalized = np.hstack([np.ones([np.shape(X_normalized)[0], 1]), X_normalized])
     Xtrain, Ytrain, Xval, Yval, Xtest, Ytest = chopped_dataset(X_normalized, Y)
     
     
@@ -422,51 +423,102 @@ def main():
     X_normalized_g2 = mapFeature.fit_transform(X_normalized)
     Xtraing2, Ytrain, Xvalg2, Yval, Xtestg2, Ytest = chopped_dataset(X_normalized_g2, Y)
     
+    mapFeature = sklearn.preprocessing.PolynomialFeatures(3)
+    X_normalized_g3 = mapFeature.fit_transform(X_normalized)
+    Xtraing3, Ytrain, Xvalg3, Yval, Xtestg3, Ytest = chopped_dataset(X_normalized_g3, Y)
+    
+    
     test_different_values(Xtrain, Ytrain, Xval, Yval)
     test_different_values(Xtraing2, Ytrain, Xvalg2, Yval)
     #test_different_values(Xtraing3, Ytrain, Xvalg3, Yval)
     
-    learning_curve(Xtrain,Ytrain,Xval,Yval,0)
+    """learning_curve(Xtrain,Ytrain,Xval,Yval,0)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,0.01)
+    learning_curve(Xtrain,Ytrain,Xval,Yval,0.1)
     learning_curve(Xtrain,Ytrain,Xval,Yval,1)
     learning_curve(Xtrain,Ytrain,Xval,Yval,20)
-    learning_curve(Xtrain,Ytrain,Xval,Yval,100)
-    learning_curve(Xtrain,Ytrain,Xval,Yval,200)
-    opt_regresion_parameter(Xtest,Ytest,Xval,Yval)
+    opt_regresion_parameter(Xtrain,Ytrain,Xval,Yval)
     
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0)
+    learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0.01)
+    learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,0.1)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,1)
     learning_curve(Xtraing2,Ytrain,Xvalg2,Yval,20)
-    opt_regresion_parameter(Xtraing2,Ytest,Xvalg2,Yval)
-    
+    opt_regresion_parameter(Xtraing2,Ytrain,Xvalg2,Yval)
+    """
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #Neuronal network
     
-    checkNNGradients(backprop,0)
-    checkNNGradients(backprop,1)
+    # checkNNGradients(backprop,0)
+    # checkNNGradients(backprop,1)
     
     
-    
-    Xtrain = np.delete(Xtrain, 0, axis=1)    
+    l=0
+    #Xtrain = np.delete(Xtrain, 0, axis=1)    
     input_layer_size = Xtrain.shape[1]
-    hidden_layer_size = 25
+    hidden_layer_size = 100
     num_labels = 1
           
     
     theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
     params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
     
-    """result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
+    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtrain, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
     
     theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
     theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
     
     np.save("t1.npy",theta_1)
-    np.save("t2.npy",theta_2)"""
+    np.save("t2.npy",theta_2)
+    """
     theta_1 = np.load("t1.npy")
-    theta_2 = np.load("t2.npy")
+    theta_2 = np.load("t2.npy")"""
     
     print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(Xtrain,Ytrain,theta_1,theta_2))
+    
+    
+    input_layer_size = Xtraing2.shape[1]
+    hidden_layer_size = 100
+    num_labels = 1
+          
+    
+    theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
+    params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    
+    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtraing2, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
+    
+    theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
+    theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
+    
+    np.save("t1.npy",theta_1)
+    np.save("t2.npy",theta_2)
+    """
+    theta_1 = np.load("t1.npy")
+    theta_2 = np.load("t2.npy")"""
+    
+    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(Xtraing2,Ytrain,theta_1,theta_2))
+    
+    input_layer_size = Xtraing3.shape[1]
+    hidden_layer_size = 100
+    num_labels = 1
+          
+    
+    theta_1, theta_2 = np.random.uniform(-.12, .12, (hidden_layer_size,input_layer_size +1)), np.random.uniform(-.12, .12,(num_labels,hidden_layer_size + 1) )
+    params_rn = np.append(np.ravel(theta_1),(np.ravel(theta_2)))
+    
+    result = opt.minimize(fun = backprop, x0= params_rn, args=(input_layer_size, hidden_layer_size, num_labels, Xtraing3, Ytrain, l),method = 'TNC', options={'maxiter': 70} , jac=True)
+    
+    theta_1= np.reshape(result.x[:hidden_layer_size * (input_layer_size + 1)], (hidden_layer_size, (input_layer_size + 1)))
+    theta_2 = np.reshape(result.x[hidden_layer_size * (input_layer_size + 1):], (num_labels, (hidden_layer_size + 1)))
+    
+    np.save("t1.npy",theta_1)
+    np.save("t2.npy",theta_2)
+    """
+    theta_1 = np.load("t1.npy")
+    theta_2 = np.load("t2.npy")"""
+    
+    print("El porcentaje de acierto del modelo con redes neuronales es: ", calcularAciertos(Xtraing3,Ytrain,theta_1,theta_2))
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     #SVM
     
